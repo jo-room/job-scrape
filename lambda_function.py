@@ -13,6 +13,8 @@ from models import *
 
 def lambda_handler(event, context, local=False):
     limit_company = event["limit_company"] if "limit_company" in event else None
+    # defaulting to 2 sec on the lambda
+    default_sleep = event["default_sleep"] if "default_sleep" in event else 2
     temp_term = event["temp_term"] if "temp_term" in event else None
     dont_replace_existing = event["dont_replace_existing"] if "dont_replace_existing" in event else False
     dont_write_existing = event["dont_write_existing"] if "dont_write_existing" in event else False
@@ -61,7 +63,8 @@ def lambda_handler(event, context, local=False):
         driver,
         run_record,
         limit_company,
-        temp_term
+        temp_term,
+        default_sleep
     )
     return_message = {}
     
@@ -113,8 +116,9 @@ if __name__ == "__main__":
         "sns_topic_arn": "",
     }
     "limit_company": "",
+    "default_sleep": 2,
     "dont_replace_existing": true/false,
-    "dont_write_existing": true/false,
+    "dont_write_existing": true/false
 }
         """)
 

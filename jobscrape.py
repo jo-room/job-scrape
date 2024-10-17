@@ -18,10 +18,10 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from models import *
 
-def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, additional_search_term = None):
+def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, additional_search_term = None, default_sleep = 1):
     existing_jobs = defaultdict(set, {key: set(value) for key, value in run_record.existing_jobs.items()})
 
-    relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(driver, limit_company, additional_search_term)
+    relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep)
     new_relevant_jobs = {}
 
     # Group jobs by company, and update existing
@@ -58,7 +58,7 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, a
 
     return new_relevant_jobs, run_record, verify_no_jobs
 
-def get_relevant_jobs(driver, limit_company, additional_search_term):
+def get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep):
     relevant_jobs: list[tuple[Company, list[JobPosting]]] = []
     skipped_companies = []
     verify_no_jobs = []
@@ -80,7 +80,7 @@ def get_relevant_jobs(driver, limit_company, additional_search_term):
             assert company.jobs_page
             print("Checking", company.name)
             try:
-                company_relevant_jobs, jobs_page_status = get_company_relevant_jobs(driver, company, search_terms)
+                company_relevant_jobs, jobs_page_status = get_company_relevant_jobs(driver, company, search_terms, default_sleep)
                 if len(company_relevant_jobs) > 0:
                     for job in company_relevant_jobs:
                         relevant_jobs.append((company, job))
@@ -95,11 +95,11 @@ def get_relevant_jobs(driver, limit_company, additional_search_term):
     driver.close()  # Close the original browser window
     return relevant_jobs, skipped_companies, verify_no_jobs, errors
 
-def get_company_relevant_jobs(driver, company, search_terms) -> (list[JobPosting], JobsPageStatus):
+def get_company_relevant_jobs(driver, company, search_terms, default_sleep) -> (list[JobPosting], JobsPageStatus):
     driver.get(company.jobs_page)
-    time.sleep(company.load_sleep)
+    time.sleep(company.load_sleep if company.load_sleep else default_sleep)
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll to bottom to lazy load everything
-    time.sleep(company.scroll_sleep)
+    time.sleep(company.scroll_sleep if company.scroll_sleep else default_sleep)
 
     company_has_jobs, jobs_page_status = has_jobs(driver, company)
     if company_has_jobs:
@@ -156,6 +156,7 @@ if __name__ == "__main__":
     parser.add_argument('--dont_replace_run_record', action='store_true', help="Don't replace the run record file")
     parser.add_argument('--dont_write_run_record', action='store_true', help="Don't write the run record file")
     parser.add_argument('--headless', action='store_true', help="Run headless")
+    parser.add_argument('--default_sleep', type=int, default=1, help="Seconds to sleep on load and after scroll")
     args = parser.parse_args()
 
     sys.path.append(os.path.abspath(args.config_scrapers_folder))
@@ -172,7 +173,8 @@ if __name__ == "__main__":
         driver, 
         run_record,
         args.limit_company,
-        args.additional_search_term
+        args.additional_search_term,
+        args.default_sleep
     )
 
     if len(verify_no_jobs) > 0:
