@@ -33,9 +33,9 @@ jobs:
               uses: docker/build-push-action@v6
               with:
                 push: true
-                tags: ${{ secrets.ECR_REGISTRY }}/job-scrape:latest
+                tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/job-scrape:latest
 
             - name: Update AWS Lambda function
               id: update-lambda
               run: |
-                  aws lambda update-function-code --function-name job-scrape --image-uri ${{ secrets.ECR_REGISTRY }}/job-scrape:latest
+                  aws lambda update-function-code --function-name job-scrape --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/job-scrape:latest
