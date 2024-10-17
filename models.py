@@ -49,6 +49,7 @@ class JobsPageStatus(Enum):
 @dataclass
 class ScrapeError:
     company_name: str
+    careers_landing_page: str
     message: str
     is_new_this_run: bool = False
 

@@ -45,12 +45,13 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, a
     scrape_errors = []
     
     if len(errors) > 0:
-        for company_name, error in errors:
+        for company, error in errors:
             scrape_error = ScrapeError(
-                company_name=company_name,
+                company_name=company.name,
+                careers_landing_page=company.careers_landing_page,
                 message= str(error),
             )
-            if company_name not in prior_run_errors_company_names:
+            if company.name not in prior_run_errors_company_names:
                 scrape_error.is_new_this_run = True
             scrape_errors.append(scrape_error)
 
@@ -62,7 +63,7 @@ def get_relevant_jobs(driver, limit_company, additional_search_term, default_sle
     relevant_jobs: list[tuple[Company, list[JobPosting]]] = []
     skipped_companies = []
     verify_no_jobs = []
-    errors: list[tuple[str, Exception]] = []
+    errors: list[tuple[Company, Exception]] = []
 
     # Dynamic import so that we can e.g. dynamically pull this file from s3, and change the config without repackaging the docker image
     import config
@@ -87,7 +88,7 @@ def get_relevant_jobs(driver, limit_company, additional_search_term, default_sle
                 elif jobs_page_status in {JobsPageStatus.GENERIC_NO_JOBS_PHRASE_FOUND, JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS}:
                     verify_no_jobs.append(company)
             except Exception as e:
-                errors.append((company.name, e))
+                errors.append((company, e))
         
         else:
             skipped_companies.append(company.name)
@@ -144,7 +145,7 @@ def format_new_jobs_message(new_jobs: dict[str, dict[str, any]]) -> str:
 
 def format_errors_message(errors: list[ScrapeError]) -> str:
     if len(errors) > 0:
-        return "Errors:\n" + "\n".join([f"{"NEW ERROR " if error.is_new_this_run else ""}{error.company_name}: {error.message}" for error in errors])
+        return "Errors:\n" + "\n".join([f"{"NEW ERROR " if error.is_new_this_run else ""}{error.company_name}{f" ({error.company_name})" if {error.company_name} else ""}: {error.message}" for error in errors])
     return "No errors."
 
 if __name__ == "__main__":
