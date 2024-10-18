@@ -82,6 +82,34 @@ See `lambda_function.py` main for additional optional event keys for debugging/d
 
 For said non-software-engineer friends
 
+Anatomy of a scraper
+```py
+class WriteYourOwnPage:
+    @staticmethod
+    def get_jobs(driver):
+        # optional: find a container, with an id, that has all the job postings
+        container = driver.find_element(By.ID, 'jobs')
+        # find job elements (within the container element)
+        job_elements = container.find_elements(By.CLASS_NAME, "job-posting")
+        
+        # keep these next two lines
+        jobs = [] # create an empty list for jobs that we will collect
+        for job in job_elements: # loop through the job_elements we have found
+
+            # job.find_element(By.TAG_NAME, "a"): within the job element, get the <a> link element
+            # .get_attribute("href"): within that element, get the value of the href attribute (i.e., the link)
+            link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
+            
+            jobs.append(
+                JobPosting(
+                    title=job.text, # grab all the text inside the job element
+                    id=link_url, # the link_url we found above will be the id
+                    link=link_url, # this is optional. if you can find an id but not a link, feel free to omit this line
+                )
+            )
+        return jobs
+```
+
 Add `breakpoint()` in a scraper to pause there and poke around. E.g., 
 ```py
 job_elements = driver.find_element(By.TAG_NAME, 'main').find_elements(By.TAG_NAME, "li")
