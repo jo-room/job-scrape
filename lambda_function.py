@@ -12,6 +12,7 @@ from selenium import webdriver
 from models import *
 
 def lambda_handler(event, context, local=False):
+    print("event", event)
     limit_company = event["limit_company"] if "limit_company" in event else None
     # defaulting to 2 sec on the lambda
     default_sleep = event["default_sleep"] if "default_sleep" in event else 2
