@@ -45,6 +45,7 @@ class JobsPageStatus(Enum):
     GENERIC_NO_JOBS_PHRASE_FOUND = 2
     NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS = 3
     SOME_JOB_FOUND = 4
+    NO_JOBS_FOUND = 5
 
 @dataclass
 class ScrapeError:

@@ -104,6 +104,8 @@ def get_company_relevant_jobs(driver, company, search_terms, default_sleep) -> (
 
     company_has_jobs, jobs_page_status = has_jobs(driver, company)
     if company_has_jobs:
+        if "Verify you are human" in driver.find_element(By.TAG_NAME, 'body').text:
+            raise Exception(f"Human verification hit. There are probably ways to bypass but I haven't figured/built that out yet. Text: {driver.find_element(By.TAG_NAME, 'body').text.replace("\n", " ")}")
         if company.jobs_page_class:
             jobs = company.jobs_page_class.get_jobs(driver)
             if len(jobs) > 0:
@@ -124,10 +126,8 @@ def has_jobs(driver, company) -> (bool, JobsPageStatus):
         if company.no_jobs_phrase.lower() in all_text_lower:
             return False, JobsPageStatus.SPECIFIC_NO_JOBS_PHRASE_FOUND
         return True, JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS
-    else:
-        generic_no_jobs_phrases = ['No available positions', "No positions", "Sorry", "No job", "No current", "No open", 'None available', 'Don\'t have', 'don\'t currently', 'No openings']
-        has_jobs = all(phrase.lower() not in all_text_lower for phrase in generic_no_jobs_phrases)
-        return has_jobs, JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS if has_jobs else JobsPageStatus.GENERIC_NO_JOBS_PHRASE_FOUND
+    
+    return True, JobsPageStatus.NO_JOBS_FOUND
 
 def title_is_relevant(company, title, search_terms) -> bool:
     if company.relevant_search_terms:
