@@ -48,8 +48,8 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, a
         for company, error in errors:
             scrape_error = ScrapeError(
                 company_name=company.name,
-                careers_landing_page=company.careers_landing_page,
-                message= str(error),
+                jobs_page=company.jobs_page,
+                message=str(error),
             )
             if company.name not in prior_run_errors_company_names:
                 scrape_error.is_new_this_run = True
