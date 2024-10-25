@@ -145,7 +145,7 @@ def format_new_jobs_message(new_jobs: dict[str, dict[str, any]]) -> str:
 
 def format_errors_message(errors: list[ScrapeError]) -> str:
     if len(errors) > 0:
-        return "Errors:\n" + "\n".join([f"{"NEW ERROR " if error.is_new_this_run else ""}{error.company_name}{f" ({error.company_name})" if {error.company_name} else ""}: {error.message}" for error in errors])
+        return "Errors:\n" + "\n".join([f"{"NEW ERROR " if error.is_new_this_run else ""}{error.company_name}{f" ({error.company_name}, {error.jobs_page})" if {error.company_name} else ""}: {error.message}" for error in errors])
     return "No errors."
 
 if __name__ == "__main__":
