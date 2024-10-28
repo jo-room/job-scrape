@@ -43,22 +43,29 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, a
 
     # Annotate if errors are new, and create new run record
     prior_run_errors_company_names = {error.company_name for error in run_record.errors}
+
+    errors_message = None
     scrape_errors = []
-    
+
     if len(errors) > 0:
+        messages = []
+
         for company, error in errors:
+            is_new_this_run = company.name not in prior_run_errors_company_names
             scrape_error = ScrapeError(
                 company_name=company.name,
                 jobs_page=company.jobs_page,
                 message=str(error),
+                is_new_this_run=is_new_this_run
             )
-            if company.name not in prior_run_errors_company_names:
-                scrape_error.is_new_this_run = True
             scrape_errors.append(scrape_error)
+            messages.append(f"{"NEW ERROR " if is_new_this_run else ""}{company.name}{f" ({company.name}, {company.jobs_page})" if {company.name} else ""}: {error.msg}\n{''.join(traceback.format_exception(error))}")
+
+        errors_message = "Errors:\n" + "\n".join(messages)
 
     run_record = RunRecord(existing_jobs, scrape_errors)            
 
-    return new_relevant_jobs, run_record, verify_no_jobs
+    return new_relevant_jobs, run_record, verify_no_jobs, errors_message
 
 def get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep):
     relevant_jobs: list[tuple[Company, list[JobPosting]]] = []
@@ -89,7 +96,6 @@ def get_relevant_jobs(driver, limit_company, additional_search_term, default_sle
                 elif jobs_page_status in {JobsPageStatus.GENERIC_NO_JOBS_PHRASE_FOUND, JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS}:
                     verify_no_jobs.append(company)
             except Exception as e:
-                print(traceback.format_exc())
                 errors.append((company, e))
         
         else:
@@ -173,7 +179,7 @@ if __name__ == "__main__":
         options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
-    new_relevant_jobs, run_record, verify_no_jobs = get_new_relevant_jobs(
+    new_relevant_jobs, run_record, verify_no_jobs, errors_message = get_new_relevant_jobs(
         driver, 
         run_record,
         args.limit_company,
@@ -186,7 +192,7 @@ if __name__ == "__main__":
     if len(new_relevant_jobs) > 0:
         print(bcolors.OKGREEN + format_new_jobs_message(new_relevant_jobs) + bcolors.ENDC)
     if len(run_record.errors) > 0:
-        print(bcolors.FAIL + format_errors_message(run_record.errors) + bcolors.ENDC)
+        print(bcolors.FAIL + errors_message + bcolors.ENDC)
     if len(new_relevant_jobs) == 0:
         print("No new jobs")
 

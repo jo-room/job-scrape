@@ -53,7 +53,7 @@ class JobsPageStatus(Enum):
     NO_JOBS_FOUND = 5
 
 @dataclass
-class ScrapeError:
+class ScrapeError: # serializable
     company_name: str = None
     jobs_page: str = None
     message: str = None
