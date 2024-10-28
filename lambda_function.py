@@ -21,6 +21,7 @@ def lambda_handler(event, context, local=False):
     dont_write_existing = event["dont_write_existing"] if "dont_write_existing" in event else False
 
     options = webdriver.ChromeOptions()
+    options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
 
     if not local:
         service = webdriver.ChromeService("/opt/chromedriver")
