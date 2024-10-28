@@ -3,6 +3,7 @@
 
 import argparse
 import datetime
+import traceback
 import json
 import os
 import sys
@@ -88,6 +89,7 @@ def get_relevant_jobs(driver, limit_company, additional_search_term, default_sle
                 elif jobs_page_status in {JobsPageStatus.GENERIC_NO_JOBS_PHRASE_FOUND, JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS}:
                     verify_no_jobs.append(company)
             except Exception as e:
+                print(traceback.format_exc())
                 errors.append((company, e))
         
         else:
@@ -166,6 +168,7 @@ if __name__ == "__main__":
         run_record = RunRecord.from_dict(json.load(f))
 
     options = webdriver.ChromeOptions()
+    options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
     if args.headless:
         options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)

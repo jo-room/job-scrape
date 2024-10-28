@@ -40,6 +40,11 @@ class Company:
     referral: str = None
     application_history: str = None
 
+class JobsPage:
+    @staticmethod
+    def get_jobs(driver):
+        raise NotImplementedError("Unexpected call to base class")
+
 class JobsPageStatus(Enum):
     SPECIFIC_NO_JOBS_PHRASE_FOUND = 1
     GENERIC_NO_JOBS_PHRASE_FOUND = 2
