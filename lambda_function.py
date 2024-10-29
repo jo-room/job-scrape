@@ -61,7 +61,7 @@ def lambda_handler(event, context, local=False):
     # dynamic import so we can dynamically pull config file
     from jobscrape import get_new_relevant_jobs, format_new_jobs_message, format_errors_message
 
-    new_relevant_jobs, run_record, verify_no_jobs = get_new_relevant_jobs(
+    new_relevant_jobs, run_record, verify_no_jobs, errors_message = get_new_relevant_jobs(
         driver,
         run_record,
         limit_company,
@@ -84,9 +84,9 @@ def lambda_handler(event, context, local=False):
         print(new_jobs_message)
         return_message["new_jobs"] = new_jobs_message
     
-    errors_message = format_errors_message(run_record.errors)
-    print(errors_message)
-    return_message["errors"] = errors_message
+    if len(run_record.errors) > 0:
+        print(errors_message)
+        return_message["errors"] = errors_message
     if run_record.has_new_error():
         response = sns.publish(
             TopicArn=event["aws_config"]["sns_topic_arn"],
