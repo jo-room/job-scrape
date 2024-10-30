@@ -59,7 +59,7 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, a
                 is_new_this_run=is_new_this_run
             )
             scrape_errors.append(scrape_error)
-            messages.append(f"{"NEW ERROR " if is_new_this_run else ""}{company.name}{f" ({company.name}, {company.jobs_page})" if {company.name} else ""}: {error.msg}\n{''.join(traceback.format_exception(error))}")
+            messages.append(f"{"NEW ERROR " if is_new_this_run else ""}{company.name}{f" ({company.name}, {company.jobs_page})" if {company.name} else ""}: {getattr(error, 'msg', repr(error))}\n{''.join(traceback.format_exception(error))}")
 
         errors_message = "Errors:\n" + "\n".join(messages)
 
