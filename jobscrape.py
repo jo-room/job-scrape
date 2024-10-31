@@ -7,6 +7,7 @@ import traceback
 import json
 import os
 import sys
+import importlib
 import time
 from collections import defaultdict
 from dataclasses import asdict
@@ -19,10 +20,15 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from models import *
 
-def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, additional_search_term = None, default_sleep = 1):
+# Common entrypoint
+def get_new_relevant_jobs(driver, run_record: RunRecord, config_scrapers_folder, limit_company = None, additional_search_term = None, default_sleep = 1):
+    config_module = import_from_path("config", os.path.join(config_scrapers_folder, "config.py"))
+    scrapers_module = import_from_path("scrapers", os.path.join(config_scrapers_folder, "scrapers.py"))
+
     existing_jobs = defaultdict(set, {key: set(value) for key, value in run_record.existing_jobs.items()})
 
-    relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep)
+    relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep, config_module, scrapers_module) 
+
     new_relevant_jobs = {}
 
     # Group jobs by company, and update existing
@@ -67,17 +73,16 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, limit_company = None, a
 
     return new_relevant_jobs, run_record, verify_no_jobs, errors_message
 
-def get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep):
+def get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep, config_module, scrapers_module):
     relevant_jobs: list[tuple[Company, list[JobPosting]]] = []
     skipped_companies = []
     verify_no_jobs = []
     errors: list[tuple[Company, Exception]] = []
 
     # Dynamic import so that we can e.g. dynamically pull this file from s3, and change the config without repackaging the docker image
-    import config
-    companies = [Company(**company) for company in config.companies]
+    companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
 
-    search_terms = config.search_terms
+    search_terms = config_module.search_terms
     if additional_search_term:
         search_terms.append(additional_search_term)
 
@@ -156,6 +161,16 @@ def format_errors_message(errors: list[ScrapeError]) -> str:
         return "Errors:\n" + "\n".join([f"{"NEW ERROR " if error.is_new_this_run else ""}{error.company_name}{f" ({error.company_name}, {error.jobs_page})" if {error.company_name} else ""}: {error.message}" for error in errors])
     return "No errors."
 
+
+# From https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
+def import_from_path(module_name, file_path):
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape new jobs.')
     parser.add_argument('config_scrapers_folder', type=str, help='Path to folder with config.py and scrapers.py')
@@ -167,8 +182,6 @@ if __name__ == "__main__":
     parser.add_argument('--headless', action='store_true', help="Run headless")
     parser.add_argument('--default_sleep', type=int, default=1, help="Seconds to sleep on load and after scroll")
     args = parser.parse_args()
-
-    sys.path.append(os.path.abspath(args.config_scrapers_folder))
 
     with open(args.run_record_json) as f:
         run_record = RunRecord.from_dict(json.load(f))
@@ -182,6 +195,7 @@ if __name__ == "__main__":
     new_relevant_jobs, run_record, verify_no_jobs, errors_message = get_new_relevant_jobs(
         driver, 
         run_record,
+        args.config_scrapers_folder,
         args.limit_company,
         args.additional_search_term,
         args.default_sleep
