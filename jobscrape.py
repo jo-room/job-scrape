@@ -21,13 +21,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from models import *
 
 # Common entrypoint
-def get_new_relevant_jobs(driver, run_record: RunRecord, config_scrapers_folder, limit_company = None, additional_search_term = None, default_sleep = 1):
+def get_new_relevant_jobs(driver, run_record: RunRecord, config_scrapers_folder, limit_company = None, add_search_term = None, default_sleep = 1):
     config_module = import_from_path("config", os.path.join(config_scrapers_folder, "config.py"))
     scrapers_module = import_from_path("scrapers", os.path.join(config_scrapers_folder, "scrapers.py"))
 
     existing_jobs = defaultdict(set, {key: set(value) for key, value in run_record.existing_jobs.items()})
 
-    relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep, config_module, scrapers_module) 
+    relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, config_module, scrapers_module) 
 
     new_relevant_jobs = {}
 
@@ -73,7 +73,7 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, config_scrapers_folder,
 
     return new_relevant_jobs, run_record, verify_no_jobs, errors_message
 
-def get_relevant_jobs(driver, limit_company, additional_search_term, default_sleep, config_module, scrapers_module):
+def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, config_module, scrapers_module):
     relevant_jobs: list[tuple[Company, list[JobPosting]]] = []
     skipped_companies = []
     verify_no_jobs = []
@@ -83,8 +83,8 @@ def get_relevant_jobs(driver, limit_company, additional_search_term, default_sle
     companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
 
     search_terms = config_module.search_terms
-    if additional_search_term:
-        search_terms.append(additional_search_term)
+    if add_search_term:
+        search_terms.append(add_search_term)
 
     for company in companies:
         if limit_company and limit_company.lower() not in company.name.lower():
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape new jobs.')
     parser.add_argument('config_scrapers_folder', type=str, help='Path to folder with config.py and scrapers.py')
     parser.add_argument('run_record_json', type=str, help='Path to file storing history of prior run(s)')
-    parser.add_argument('--additional_search_term', type=str, default=None, help='Search term to add in considering a job relevant')
+    parser.add_argument('--add_search_term', type=str, default=None, help='Search term to add in considering a job relevant')
     parser.add_argument('--limit_company', type=str, default=None, help='Search only companies that contain this string in their name')
     parser.add_argument('--dont_replace_run_record', action='store_true', help="Don't replace the run record file")
     parser.add_argument('--dont_write_run_record', action='store_true', help="Don't write the run record file")
@@ -197,7 +197,7 @@ if __name__ == "__main__":
         run_record,
         args.config_scrapers_folder,
         args.limit_company,
-        args.additional_search_term,
+        args.add_search_term,
         args.default_sleep
     )
 

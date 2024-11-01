@@ -137,13 +137,13 @@ JobPosting(
 python3 jobscrape.py configs/ data/run_record.json && say "done"
 
 # Temporarily include an additional search term to verify that the scraper was successfully able to grab jobs on the page (even if none currently are relevant)
-python3 jobscrape.py configs/ data/run_record.json --additional_search_term "director"
+python3 jobscrape.py configs/ data/run_record.json --add_search_term "director"
 
 # Combine limiting to one company (that you are writing the scraper for) and including an additional temporary search term
-python3 jobscrape.py configs/ data/run_record.json --limit_company "example company name" --additional_search_term "director"
+python3 jobscrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director"
 
 # Combine with not overwriting the existing jobs file, so that you can keep running the same command to test if the scraper works. There should be a new file with the timestamp in outputs/ that includes the found new director job
-python3 jobscrape.py configs/ data/run_record.json --limit_company "example company name" --additional_search_term "director" --dont_replace_run_record
+python3 jobscrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director" --dont_replace_run_record
 ```
 
 Selenium documentation:
