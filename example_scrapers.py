@@ -71,6 +71,49 @@ class BambooPage(JobsPage):
             )
         return jobs
 
+class WorkablePage(JobsPage):
+    @staticmethod
+    def get_jobs(driver): 
+        job_elements = driver.find_elements(By.XPATH, '//li[@data-ui="job-opening"]')
+        jobs = []
+        for job in job_elements:
+            link_url = job.find_element(By.TAG_NAME, 'a').get_attribute("href")
+            jobs.append(
+                JobPosting(
+                    title=job.text,
+                    id=link_url,
+                )
+            )
+        return jobs
+
+class AshbyPage(JobsPage):
+    @staticmethod
+    def get_jobs(driver):
+        root = driver.find_element(By.ID, 'root')
+        containers = root.find_elements(By.CLASS_NAME, 'ashby-job-posting-brief-list')
+        jobs = []
+        for container in containers:
+            job_elements = container.find_elements(By.TAG_NAME, 'a')
+            for job in job_elements:
+                link_url = job.get_attribute("href")
+                jobs.append(
+                    JobPosting(
+                        title=job.text,
+                        id=link_url,
+                        link=link_url,
+                    )
+                )
+        return jobs
+
+class AshbyEmbeddedPage(JobsPage):
+    @staticmethod
+    def get_jobs(driver):
+        ashby_iframe = driver.find_element(By.ID, "ashby_embed_iframe")
+        assert ashby_iframe.tag_name == "iframe"
+        driver.switch_to.frame(ashby_iframe)
+
+        return AshbyPage.get_jobs(driver)
+
 class BitsInBioPage(JobsPage):
     @staticmethod
     def get_jobs(driver):
