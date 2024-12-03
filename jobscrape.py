@@ -79,7 +79,6 @@ def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, con
     verify_no_jobs = []
     errors: list[tuple[Company, Exception]] = []
 
-    # Dynamic import so that we can e.g. dynamically pull this file from s3, and change the config without repackaging the docker image
     companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
 
     search_terms = config_module.search_terms
@@ -89,18 +88,22 @@ def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, con
     for company in companies:
         if limit_company and limit_company.lower() not in company.name.lower():
             continue
-        
+
         if company.active:
-            assert company.jobs_page
             print("Checking", company.name)
             try:
-                company_relevant_jobs, jobs_page_status = get_company_relevant_jobs(driver, company, search_terms, default_sleep)
+                if company.is_crunchbase:
+                    company_relevant_jobs, jobs_page_status = get_crunchbase_companies(driver, company, default_sleep)
+                else:
+                    assert company.jobs_page
+                    company_relevant_jobs, jobs_page_status = get_company_relevant_jobs(driver, company, search_terms, default_sleep)
                 if len(company_relevant_jobs) > 0:
                     for job in company_relevant_jobs:
                         relevant_jobs.append((company, job))
                 elif jobs_page_status in {JobsPageStatus.GENERIC_NO_JOBS_PHRASE_FOUND, JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS}:
                     verify_no_jobs.append(company)
             except Exception as e:
+                print(driver.find_element(By.XPATH, "/html/body").text)
                 errors.append((company, e))
         
         else:
@@ -108,6 +111,30 @@ def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, con
     
     driver.close()  # Close the original browser window
     return relevant_jobs, skipped_companies, verify_no_jobs, errors
+
+def get_crunchbase_companies(driver, company, default_sleep) -> (list[JobPosting], JobsPageStatus):
+    jobs_page_status = JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS
+    jobs = []
+    job_ids = set()
+    for scrape_page in company.scrape_pages:
+        driver.get(scrape_page)
+        time.sleep(company.load_sleep if company.load_sleep else default_sleep)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll to bottom to lazy load everything
+        time.sleep(company.scroll_sleep if company.scroll_sleep else default_sleep)
+
+        page_jobs = company.jobs_page_class.get_jobs(driver)
+        
+        if len(page_jobs) > 0:
+            jobs_page_status = JobsPageStatus.SOME_JOB_FOUND
+
+        for job in page_jobs:
+            job.title = job.title + f" ({scrape_page})"
+            if job.id not in job_ids:
+                job_ids.add(job.id)
+                jobs.append(job)
+
+    return jobs, jobs_page_status
+
 
 def get_company_relevant_jobs(driver, company, search_terms, default_sleep) -> (list[JobPosting], JobsPageStatus):
     driver.get(company.jobs_page)

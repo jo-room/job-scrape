@@ -40,6 +40,9 @@ class Company:
     referral: str = None
     application_history: str = None
 
+    is_crunchbase: bool = False
+    scrape_pages: str = None
+
 class JobsPage:
     @staticmethod
     def get_jobs(driver):
