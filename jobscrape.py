@@ -178,7 +178,7 @@ def title_is_relevant(company, title, search_terms) -> bool:
 def format_new_jobs_message(new_jobs: dict[str, dict[str, any]]) -> str:
     message = ""
     for company_name, info in new_jobs.items():
-        message += f"\n{company_name} ({info["company"].jobs_page}):\n"
+        message += f"\n{company_name} ( {info["company"].jobs_page} ):\n"
         for job in info["jobs"]:
                 message += f"\t {job.title.replace("\n", " ")} {job.link if job.link else ""}\n"
     return message
