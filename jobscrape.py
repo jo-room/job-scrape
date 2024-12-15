@@ -74,7 +74,7 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, config_scrapers_folder,
     return new_relevant_jobs, run_record, verify_no_jobs, errors_message
 
 def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, config_module, scrapers_module):
-    relevant_jobs: list[tuple[Company, list[JobPosting]]] = []
+    relevant_jobs: list[tuple[Company, JobPosting]] = []
     skipped_companies = []
     verify_no_jobs = []
     errors: list[tuple[Company, Exception]] = []
@@ -116,13 +116,13 @@ def get_crunchbase_companies(driver, company, default_sleep) -> (list[JobPosting
     jobs_page_status = JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS
     jobs = []
     job_ids = set()
-    for scrape_page in company.scrape_pages:
+    for page_type, scrape_page in company.scrape_pages:
         driver.get(scrape_page)
         time.sleep(company.load_sleep if company.load_sleep else default_sleep)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll to bottom to lazy load everything
         time.sleep(company.scroll_sleep if company.scroll_sleep else default_sleep)
 
-        page_jobs = company.jobs_page_class.get_jobs(driver)
+        page_jobs = company.jobs_page_class[page_type].get_jobs(driver)
         
         if len(page_jobs) > 0:
             jobs_page_status = JobsPageStatus.SOME_JOB_FOUND
@@ -133,6 +133,7 @@ def get_crunchbase_companies(driver, company, default_sleep) -> (list[JobPosting
                 job_ids.add(job.id)
                 jobs.append(job)
 
+    jobs.sort(key=lambda x: (x.date is not None, x.date), reverse=True)
     return jobs, jobs_page_status
 
 

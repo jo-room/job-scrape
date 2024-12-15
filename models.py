@@ -1,4 +1,5 @@
 import time
+import datetime
 
 from typing import TypedDict
 from dataclasses import dataclass
@@ -15,11 +16,16 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class CrunchbasePageType(Enum):
+    HUB = 1
+    DISCOVER = 2
+
 @dataclass
 class JobPosting:
     title: str = None
     link: str = None
     id: str = None
+    date: datetime.date = None # only used for crunchbase
 
 @dataclass
 class Company:
@@ -41,7 +47,7 @@ class Company:
     application_history: str = None
 
     is_crunchbase: bool = False
-    scrape_pages: str = None
+    scrape_pages: [(str, CrunchbasePageType)] = None
 
 class JobsPage:
     @staticmethod
