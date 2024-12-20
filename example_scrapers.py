@@ -74,7 +74,8 @@ class BambooPage(JobsPage):
 class WorkablePage(JobsPage):
     @staticmethod
     def get_jobs(driver): 
-        job_elements = driver.find_elements(By.XPATH, '//li[@data-ui="job-opening"]')
+        container = driver.find_element(By.ID, "jobs")
+        job_elements = container.find_elements(By.XPATH, '//li[@data-ui="job"]')
         jobs = []
         for job in job_elements:
             link_url = job.find_element(By.TAG_NAME, 'a').get_attribute("href")

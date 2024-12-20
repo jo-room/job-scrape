@@ -7,6 +7,7 @@ import traceback
 import json
 import os
 import sys
+import shutil
 import importlib
 import time
 from collections import defaultdict
@@ -206,6 +207,7 @@ if __name__ == "__main__":
     parser.add_argument('--add_search_term', type=str, default=None, help='Search term to add in considering a job relevant')
     parser.add_argument('--limit_company', type=str, default=None, help='Search only companies that contain this string in their name')
     parser.add_argument('--dont_replace_run_record', action='store_true', help="Don't replace the run record file")
+    parser.add_argument('--backup_run_record', action='store_true', help="Rename the original run record file to <original file name>_backup.json")
     parser.add_argument('--dont_write_run_record', action='store_true', help="Don't write the run record file")
     parser.add_argument('--headless', action='store_true', help="Run headless")
     parser.add_argument('--default_sleep', type=int, default=1, help="Seconds to sleep on load and after scroll")
@@ -238,11 +240,19 @@ if __name__ == "__main__":
     if len(new_relevant_jobs) == 0:
         print("No new jobs")
 
-    if len(new_relevant_jobs) > 0 and not args.dont_write_run_record: # disconnected logic not tied with a hard constraint
+    if len(new_relevant_jobs) > 0:
         filename = args.run_record_json
-        if args.dont_replace_run_record:
+
+        if args.backup_run_record:
             path, extension = os.path.splitext(filename)
-            filename = f"{path}_{str(datetime.datetime.now()).replace(" ", "_")}{extension}"
-        with open(filename, 'w') as f:
-            json.dump(asdict(run_record), f, indent=4)
-        print(f"Wrote new existing jobs to {filename}")
+            backup_dest = f"{path}_backup{extension}"
+            shutil.copy2(filename, backup_dest)
+            print(f"Backed up {filename} to {backup_dest}")
+
+        if not args.dont_write_run_record:
+            if args.dont_replace_run_record:
+                path, extension = os.path.splitext(filename)
+                filename = f"{path}_{str(datetime.datetime.now()).replace(" ", "_")}{extension}"
+            with open(filename, 'w') as f:
+                json.dump(asdict(run_record), f, indent=4)
+            print(f"Wrote new existing jobs to {filename}")
