@@ -22,12 +22,9 @@ class GreenhousePage(JobsPage):
             )
         return jobs
 
-class GreenhouseEmbeddedPage(JobsPage):
+class GreenhouseEmbeddedStandalonePage(JobsPage):
     @staticmethod
     def get_jobs(driver):
-        greenhouse_iframe = driver.find_element(By.ID, "grnhse_iframe")
-        assert greenhouse_iframe.tag_name == "iframe"
-        driver.switch_to.frame(greenhouse_iframe)
         job_elements = driver.find_elements(By.CLASS_NAME, 'opening')
         jobs = []
         for job in job_elements:
@@ -40,6 +37,15 @@ class GreenhouseEmbeddedPage(JobsPage):
                 )
             )
         return jobs
+
+class GreenhouseEmbeddedPage(JobsPage):
+    @staticmethod
+    def get_jobs(driver):
+        time.sleep(2)
+        greenhouse_iframe = driver.find_element(By.ID, "grnhse_iframe")
+        assert greenhouse_iframe.tag_name == "iframe"
+        driver.switch_to.frame(greenhouse_iframe)
+        return GreenhouseEmbeddedStandalonePage.get_jobs(driver)
 
 class LeverCoPage(JobsPage):
     @staticmethod
@@ -87,6 +93,23 @@ class WorkablePage(JobsPage):
             )
         return jobs
 
+class RipplingPage(JobsPage):
+    @staticmethod
+    def get_jobs(driver): 
+        all_anchors = driver.find_elements(By.TAG_NAME, 'a')
+        job_elements = [el.find_element(By.XPATH, './../..') for el in all_anchors if 'jobs' in el.get_attribute("href") and el.text != "Apply"]
+        jobs = []
+        for job in job_elements:
+            link_url = job.find_element(By.TAG_NAME, 'a').get_attribute("href")
+            jobs.append(
+                JobPosting(
+                    title=job.text + " (note this only shows one location but there might be multiple for this same link)",
+                    id=link_url,
+                    link=link_url,
+                )
+            )
+        return jobs
+
 class AshbyPage(JobsPage):
     @staticmethod
     def get_jobs(driver):
@@ -114,6 +137,41 @@ class AshbyEmbeddedPage(JobsPage):
         driver.switch_to.frame(ashby_iframe)
 
         return AshbyPage.get_jobs(driver)
+
+
+class ApplyToJobPage(JobsPage):
+    @staticmethod
+    def get_jobs(driver):
+        container = driver.find_element(By.CLASS_NAME, 'jobs-list')
+        job_elements = container.find_elements(By.CSS_SELECTOR, 'li.list-group-item')
+        jobs = []
+        for job in job_elements:
+            link_url = job.find_element(By.TAG_NAME, 'a').get_attribute("href")
+            jobs.append(
+                JobPosting(
+                    title=job.text,
+                    id=link_url,
+                    link=link_url,
+                )
+            )
+        return jobs
+
+class SmartRecruitersPage(JobsPage):
+    @staticmethod
+    def get_jobs(driver):
+        container = driver.find_element(By.CLASS_NAME, 'openings-body')
+        job_elements = container.find_elements(By.CSS_SELECTOR, 'li.opening-job')
+        jobs = []
+        for job in job_elements:
+            link_url = job.find_element(By.TAG_NAME, 'a').get_attribute("href")
+            jobs.append(
+                JobPosting(
+                    title=job.text,
+                    id=link_url,
+                    link=link_url,
+                )
+            )
+        return jobs
 
 class BitsInBioPage(JobsPage):
     @staticmethod
