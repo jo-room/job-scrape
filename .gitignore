@@ -1,6 +1,9 @@
 .venv/
 __pycache__/
-data/
-configs/
-notes/
 .DS_Store
+
+data/
+notes/
+
+configs/
+cloudformation/
