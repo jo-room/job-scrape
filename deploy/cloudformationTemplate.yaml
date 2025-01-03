@@ -1,0 +1,36 @@
+Transform: AWS::LanguageExtensions
+Parameters:
+  UserNames:
+    Default: user1,user2
+    Type: CommaDelimitedList
+Resources:
+  Fn::ForEach::ScheduleLoop:
+    - UserName
+    - !Ref UserNames
+    - Schedule&{UserName}:
+        Type: AWS::Scheduler::Schedule
+        Properties:
+          ScheduleExpression: 'cron(0 6 ? * 2-6 *)'
+          FlexibleTimeWindow:
+            Mode: 'FLEXIBLE'
+            MaximumWindowInMinutes: 30
+          GroupName: 'job-scrape'
+          ScheduleExpressionTimezone: America/New_York
+          Target:
+            Arn: arn:aws:lambda:<AWS REGION>:<AWS ACCOUNT NUMBER>:function:job-scrape
+            Input: !Sub '{ "aws_config": { "bucket_name": "<BUCKET NAME>", "config_file":
+              "${UserName}/config.py", "scrapers_file":
+              "${UserName}/scrapers.py", "run_record_json":
+              "${UserName}/run_record.json", "sns_topic_arn":
+              "arn:aws:sns:<AWS REGION>:<AWS ACCOUNT NUMBER>:job-scrape-${UserName}" } }'
+            RetryPolicy:
+              MaximumEventAgeInSeconds: 600
+              MaximumRetryAttempts: 2
+            RoleArn: <LAMBDA ARN>
+  Fn::ForEach::SnsLoop:
+    - UserName
+    - !Ref UserNames
+    - SnsTopic&{UserName}:
+        Type: AWS::SNS::Topic
+        Properties:
+          TopicName: !Sub job-scrape-${UserName}
