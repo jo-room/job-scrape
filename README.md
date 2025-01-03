@@ -29,13 +29,13 @@ Usage
 source .venv/bin/activate
 
 # Search all companies in config
-python3 jobscrape.py configs/ data/run_record.json
+python3 job_scrape.py configs/ data/run_record.json
 
 # Limit search to company name
-python3 jobscrape.py configs/ data/run_record.json --limit_company "example company name"
+python3 job_scrape.py configs/ data/run_record.json --limit_company "example company name"
 
 # Run headless (i.e. without opening Chrome)
-python3 jobscrape.py configs/ data/run_record.json --headless
+python3 job_scrape.py configs/ data/run_record.json --headless
 ```
 
 Configure `config.py` and write scrapers in `scrapers.py`.
@@ -134,16 +134,16 @@ JobPosting(
 
 ```sh
 # Sound notification when done
-python3 jobscrape.py configs/ data/run_record.json && say "done"
+python3 job_scrape.py configs/ data/run_record.json && say "done"
 
 # Temporarily include an additional search term to verify that the scraper was successfully able to grab jobs on the page (even if none currently are relevant)
-python3 jobscrape.py configs/ data/run_record.json --add_search_term "director"
+python3 job_scrape.py configs/ data/run_record.json --add_search_term "director"
 
 # Combine limiting to one company (that you are writing the scraper for) and including an additional temporary search term
-python3 jobscrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director"
+python3 job_scrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director"
 
 # Combine with not overwriting the existing jobs file, so that you can keep running the same command to test if the scraper works. There should be a new file with the timestamp in outputs/ that includes the found new director job
-python3 jobscrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director" --dont_replace_run_record
+python3 job_scrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director" --dont_replace_run_record
 ```
 
 Selenium documentation:
