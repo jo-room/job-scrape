@@ -104,7 +104,6 @@ def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, con
                 elif jobs_page_status in {JobsPageStatus.GENERIC_NO_JOBS_PHRASE_FOUND, JobsPageStatus.NO_JOBS_PHRASE_NOT_FOUND_BUT_NO_JOBS}:
                     verify_no_jobs.append(company)
             except Exception as e:
-                print(driver.find_element(By.XPATH, "/html/body").text)
                 errors.append((company, e))
         
         else:
