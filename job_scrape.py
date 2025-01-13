@@ -17,6 +17,7 @@ from tempfile import mkdtemp
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.exceptions import WebDriverException
 from selenium.webdriver.support import expected_conditions as EC
 
 from models import *
@@ -108,8 +109,11 @@ def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, con
         
         else:
             skipped_companies.append(company.name)
-    
-    driver.close()  # Close the original browser window
+    try:
+        driver.close()  # Close the original browser window
+    except WebDriverException as e:
+        if "not connected to DevTools" not in str(e):
+            raise e
     return relevant_jobs, skipped_companies, verify_no_jobs, errors
 
 def get_crunchbase_companies(driver, company, default_sleep) -> (list[JobPosting], JobsPageStatus):

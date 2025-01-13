@@ -41,6 +41,7 @@ def lambda_handler(event, context, local=False):
     options.add_argument(f"--data-path={mkdtemp()}")
     options.add_argument(f"--disk-cache-dir={mkdtemp()}")
     options.add_argument("--remote-debugging-port=9222")
+    options.add_argument("--disable-features=OptimizationGuideModelDownloading")
 
     if local:
         driver = webdriver.Chrome(options=options)
