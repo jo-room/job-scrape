@@ -83,7 +83,9 @@ def lambda_handler(event, context, local=False):
             print("New jobs:")
             print(new_jobs_message)
             return_message["new_jobs"] = new_jobs_message
-        
+        else:
+            print("No new jobs")
+
         if len(run_record.errors) > 0:
             print(errors_message)
             return_message["errors"] = errors_message
@@ -100,6 +102,7 @@ def lambda_handler(event, context, local=False):
         if not dont_write_existing:
             run_record_object.put(Body=json.dumps(asdict(run_record), indent=4))
 
+        print("finished")
         return {
             'statusCode': 200,
             'body': return_message
