@@ -8,6 +8,8 @@ Can be run as a local Python script to output new jobs (relative to the last run
 
 Crunchbase has a lot of scrape protections and so needs to be run locally.
 
+Only new scrape errors will be printed/emailed; it will not notify if the company errored in the last run.
+
 ## Local development and running
 
 Install dependencies
