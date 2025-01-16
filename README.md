@@ -4,11 +4,9 @@ Used for:
 1. Monitoring the careers page of specific companies. Requires knowing the specific companies you want to follow, and writing scrapers for their careers page.
 2. Scraping Crunchbase pages to collect, de-duplicate, and discover companies.
 
-Can be run as a local Python script to output new jobs (relative to the last run) matching your search terms. Or, can be hosted on AWS to run e.g. daily and send an email notification for new jobs. Only new scrape errors will be printed/emailed; it will not notify if the company also errored in the last run.
+Can be run as a local Python script to output new jobs (relative to the last run) matching your search terms. Or, can be hosted on AWS to run e.g. daily and send an email notification for new jobs. Crunchbase has a lot of scrape protections and so needs to be run locally. Only new scrape errors will be printed/emailed; it will not notify if the company also errored in the last run.
 
-Crunchbase has a lot of scrape protections and so needs to be run locally.
-
-Architected a little weirdly so I can host this for non-software-engineer friends who might be down for some Python-writing and HTML. See [docs/deployment.md](docs/deployment.md).
+Architected a little weirdly so I can host this for non-software-engineer friends who might be down for some Python-writing and HTML. See [docs/deployment.md](docs/deployment.md) for the system design and hosting, talk to me if you're a non-software-engineer friend.
 
 ## Local development and running
 
