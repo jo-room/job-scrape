@@ -1,3 +1,4 @@
+import common_scrapers
 from models import *
 
 search_terms = ["software", "developer", "engineer", "frontend", "front end", "front-end", "backend", "back end", "back-end", "fullstack", "full stack", "full-stack"]
@@ -22,7 +23,7 @@ def just_an_example(scrapers):
 		{
 			"name": "Example Company", # Required
 			"jobs_page": "https://www.example.com/jobs", # Required for scraping
-			"jobs_page_class": scrapers.LeverCoPage, # Required for scraping
+			"jobs_page_class": common_scrapers.LeverCoPage, # Required for scraping
 
 			# Optional fine-tuning keys
 			"active": False, # Temporarily turn this company off
