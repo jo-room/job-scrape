@@ -1,3 +1,4 @@
+import json
 from models import *
 from selenium.webdriver.common.by import By
 
@@ -91,6 +92,46 @@ class WorkablePage(JobsPage):
                     id=link_url,
                 )
             )
+        return jobs
+
+class WorkdayPage(JobsPage):
+    @staticmethod
+    def get_jobs(driver):
+        time.sleep(1)
+
+        PAUSE_TIME = 2
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll to bottom
+        time.sleep(PAUSE_TIME)
+
+        click_counter = 0
+        while len(driver.find_elements(By.XPATH, '//button[@data-uxi-widget-type="stepToNextButton"]')) > 0 and driver.find_element(By.XPATH, '//button[@data-uxi-widget-type="stepToNextButton"]').is_displayed():
+            driver.find_element(By.XPATH, '//button[@data-uxi-widget-type="stepToNextButton"]').click()
+            time.sleep(PAUSE_TIME)
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll to bottom
+            time.sleep(PAUSE_TIME)
+            click_counter += 1
+        
+        print("Workday clicked next", click_counter, "times")
+
+        logs = driver.get_log("performance")
+        relevant_logs = [json.loads(log["message"]) for log in logs if "Network.responseReceived" in log["message"]]
+        request_ids = [log['message']['params']['requestId'] for log in relevant_logs if 'response' in log['message']['params'] and 'url' in log['message']['params']['response'] and "/jobs" in log['message']['params']['response']['url'] and log['message']['params']['type'] == 'Fetch']
+        assert len(request_ids) >= 1
+
+        nested_job_postings = [json.loads(driver.execute_cdp_cmd('Network.getResponseBody', {'requestId': request_id})['body'])['jobPostings'] for request_id in request_ids]
+        print("Got workday data with", len(request_ids), "requests")
+
+        jobs = []
+        for job_postings in nested_job_postings:
+            for job in job_postings:
+                link_url = driver.current_url.split("?")[0] + job['externalPath']
+                jobs.append(
+                    JobPosting(
+                        title=job['title'],
+                        id=link_url,
+                        link=link_url,
+                    )
+                )
         return jobs
 
 class RipplingPage(JobsPage):

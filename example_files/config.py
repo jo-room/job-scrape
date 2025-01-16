@@ -1,5 +1,4 @@
 from models import *
-from scrapers import *
 
 search_terms = ["software", "developer", "engineer", "frontend", "front end", "front-end", "backend", "back end", "back-end", "fullstack", "full stack", "full-stack"]
 

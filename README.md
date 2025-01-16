@@ -8,6 +8,8 @@ Can be run as a local Python script to output new jobs (relative to the last run
 
 Crunchbase has a lot of scrape protections and so needs to be run locally.
 
+Architected a little weirdly so I can host this for non-software-engineer friends who might be down for some Python-writing and HTML. See [docs/deployment.md](docs/deployment.md).
+
 ## Local development and running
 
 Install dependencies
