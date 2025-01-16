@@ -239,7 +239,7 @@ class BitsInBioPage(JobsPage):
 
 # Ask me for the climatetechlist scraper
 
-class WriteYourOwnPage:
+class WriteYourOwnPage(JobsPage):
     @staticmethod
     def get_jobs(driver):
         container = driver.find_element(By.ID, 'jobs')

@@ -13,6 +13,8 @@ Can be run as a local Python script to output new jobs (relative to the last run
 
 ## Local development and running
 
+Assumes Python 3.12 and up.
+
 Install dependencies
 ```sh
 python3 -m venv .venv

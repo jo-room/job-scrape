@@ -1,36 +1,35 @@
 # Usage
 
-## Programming 102/tips on writing scrapers
-
 For said non-software-engineer friends
 
-Anatomy of a scraper
-```py
-class WriteYourOwnPage:
-    @staticmethod
-    def get_jobs(driver):
-        # optional: find a container, with an id, that has all the job postings
-        container = driver.find_element(By.ID, 'jobs')
-        # find job elements (within the container element)
-        job_elements = container.find_elements(By.CLASS_NAME, "job-posting")
-        
-        # keep these next two lines
-        jobs = [] # create an empty list for jobs that we will collect
-        for job in job_elements: # loop through the job_elements we have found
+## Installation
+Download and install
+- PyCharm Community Edition (might need to scroll down for the Community Edition): https://www.jetbrains.com/pycharm/download/
 
-            # job.find_element(By.TAG_NAME, "a"): within the job element, get the <a> link element
-            # .get_attribute("href"): within that element, get the value of the href attribute (i.e., the link)
-            link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
-            
-            jobs.append(
-                JobPosting(
-                    title=job.text, # grab all the text inside the job element
-                    id=link_url, # the link_url we found above will be the id
-                    link=link_url, # this is optional. if you can find an id but not a link, feel free to omit this line
-                )
-            )
-        return jobs
+
+## Programming 102/tips on writing scrapers
+
+### Running
+```sh
+# Sound notification when done
+python3 job_scrape.py configs/ data/run_record.json && say "done"
+
+# List all flags
+python3 job_scrape.py --help
+
+# Temporarily include an additional search term to verify that the scraper was successfully able to grab jobs on the page (even if none currently are relevant)
+python3 job_scrape.py configs/ data/run_record.json --add_search_term "director"
+
+# Combine limiting to one company (that you are writing the scraper for) and including an additional temporary search term
+python3 job_scrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director"
+
+# Combine with not overwriting the existing jobs file, so that you can keep running the same command to test if the scraper works. There should be a new file with the timestamp in outputs/ that includes the found new director job
+python3 job_scrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director" --dont_replace_run_record
 ```
+
+### Debugging tips
+
+`print()` and `breakpoint()`
 
 Add `breakpoint()` in a scraper to pause there and poke around. E.g., 
 ```py
@@ -45,6 +44,8 @@ job_elements
 # Meaning that it didn't get anything!
 ```
 
+### Filling out the field for a JobPosting
+
 A `JobPosting` requires a `title` and `id`.
 ```py
 JobPosting(
@@ -54,20 +55,7 @@ JobPosting(
 )
 ```
 
-```sh
-# Sound notification when done
-python3 job_scrape.py configs/ data/run_record.json && say "done"
-
-# Temporarily include an additional search term to verify that the scraper was successfully able to grab jobs on the page (even if none currently are relevant)
-python3 job_scrape.py configs/ data/run_record.json --add_search_term "director"
-
-# Combine limiting to one company (that you are writing the scraper for) and including an additional temporary search term
-python3 job_scrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director"
-
-# Combine with not overwriting the existing jobs file, so that you can keep running the same command to test if the scraper works. There should be a new file with the timestamp in outputs/ that includes the found new director job
-python3 job_scrape.py configs/ data/run_record.json --limit_company "example company name" --add_search_term "director" --dont_replace_run_record
-```
-
+### Finding HTML elements on a page
 Selenium documentation:
 https://www.selenium.dev/documentation/webdriver/elements/locators/
 
@@ -86,3 +74,5 @@ Additionally, I will sometimes look at logs in order to debug errors. Anything y
 I won't act on anything I see, including that I will not use or share any information I see for my own job search or anyone else's.
 
 This is about the level of privacy you would expect with the employees of any website you use, but in this case you personally know the only employee.
+
+If you want to run things without me having access to them, you can run the scrape locally on your computer.
