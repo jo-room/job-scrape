@@ -237,6 +237,8 @@ class BitsInBioPage(JobsPage):
             )
         return jobs
 
+# Ask me for the climatetechlist scraper
+
 class WriteYourOwnPage:
     @staticmethod
     def get_jobs(driver):

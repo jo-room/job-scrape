@@ -10,8 +10,16 @@ def get_companies(scrapers):
 			"jobs_page": "https://www.bitsinbio.org/jobs",
 			"jobs_page_class": scrapers.BitsInBioPage,
 		},
+		# Add more companies here
+	]
+
+
+
+# Fake example demonstrating all keys. Keys match properties in class `Company`
+# You don't actually want to make another function, I just wanted syntax highlighting for this example. Additional companies should go in the list returned by `get_companies`.
+def just_an_example(scrapers):
+	return [
 		{
-			# Fake example demonstrating all keys. Keys match properties in class `Company`
 			"name": "Example Company", # Required
 			"jobs_page": "https://www.example.com/jobs", # Required for scraping
 			"jobs_page_class": scrapers.LeverCoPage, # Required for scraping
@@ -35,3 +43,4 @@ def get_companies(scrapers):
 
 		}
 	]
+

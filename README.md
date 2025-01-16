@@ -1,12 +1,15 @@
 # Careers Page Scraper
 
 Used for:
-1. Monitoring the careers page of specific companies. Requires knowing the specific companies you want to follow, and writing scrapers for their careers page.
+1. Monitoring the careers page of specific companies, and getting emailed if jobs with your keywords are added. Requires knowing the specific companies you want to follow, and reusing/writing scrapers for their careers page.
+   * See [example_files/scrapers.py](example_files/scrapers.py) for the generic types of career pages that already have scrapers written.
 2. Scraping Crunchbase pages to collect, de-duplicate, and discover companies.
+   * Crunchbase has a lot of scrape protections and so needs to be run locally (manually triggered, instead of getting emailed when there's something new). It should also be run behind a VPN service, unless you want to risk your home IP getting blocked.
 
-Can be run as a local Python script to output new jobs (relative to the last run) matching your search terms. Or, can be hosted on AWS to run e.g. daily and send an email notification for new jobs. Crunchbase has a lot of scrape protections and so needs to be run locally. Only new scrape errors will be printed/emailed; it will not notify if the company also errored in the last run.
+If you're a non-software-engineer friend who's interested in this and might be down for some Python-writing and HTML, talk to me 🙂. (Or just talk to me anyway, cos yay friends!)
 
-Architected a little weirdly so I can host this for non-software-engineer friends who might be down for some Python-writing and HTML. See [docs/deployment.md](docs/deployment.md) for the system design and hosting, talk to me if you're a non-software-engineer friend.
+Can be run as a local Python script to output new jobs (relative to the last run) matching your search terms. Or, can be hosted on AWS to run e.g. daily and send an email notification for new jobs. Only new scrape errors will be printed/emailed; it will not notify if the company also errored in the last run.
+
 
 ## Local development and running
 
