@@ -1,7 +1,7 @@
 # Careers Page Scraper
 
 Used for:
-1. Monitoring the careers page of specific companies, and getting emailed if jobs with your keywords are added. Requires knowing the specific companies you want to follow, and reusing/writing scrapers for their careers page.
+1. Job alerts for companies that don't have a way to sign up for job alerts. Requires knowing the specific companies you want to follow, and reusing/writing scrapers for their careers page.
    * See [common_scrapers.py](common_scrapers.py) for the generic types of career pages that already have scrapers written.
 2. Scraping Crunchbase pages to collect, de-duplicate, and discover companies.
    * Crunchbase has a lot of scrape protections and so needs to be run locally (manually triggered, instead of getting emailed when there's something new). It should also be run behind a VPN service, unless you want to risk your home IP getting blocked.
