@@ -22,10 +22,16 @@ class CrunchbasePageType(Enum):
 
 @dataclass
 class JobPosting:
-    title: str = None
+    title: str
+    id: str
     link: str = None
-    id: str = None
     date: datetime.date = None # only used for crunchbase
+
+    def __post_init__(self):
+        assert isinstance(self.title, str), f"JobPosting title must be string, got type {type(self.title)} instead"
+        assert isinstance(self.id, str), f"JobPosting id must be string, got type {type(self.id)} instead"
+        if self.link:
+            assert isinstance(self.link, str), f"JobPosting link must be string, got type {type(self.link)} instead"
 
 @dataclass
 class Company:
