@@ -28,8 +28,9 @@ class JobPosting:
     date: datetime.date = None # only used for crunchbase
 
     def __post_init__(self):
-        assert isinstance(self.title, str), f"JobPosting title must be string, got type {type(self.title)} instead"
-        assert isinstance(self.id, str), f"JobPosting id must be string, got type {type(self.id)} instead"
+        if self.title:
+            assert isinstance(self.title, str), f"JobPosting title must be string, got type {type(self.title)} instead"
+        assert isinstance(self.id, str) or isinstance(self.id, str) , f"JobPosting id must be int or string, got type {type(self.id)} instead"
         if self.link:
             assert isinstance(self.link, str), f"JobPosting link must be string, got type {type(self.link)} instead"
 
