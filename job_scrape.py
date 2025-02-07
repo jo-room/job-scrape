@@ -23,13 +23,11 @@ from selenium.common.exceptions import WebDriverException
 from models import *
 
 # Common entrypoint
-def get_new_relevant_jobs(driver, run_record: RunRecord, config_scrapers_folder, limit_company = None, add_search_term = None, default_sleep = 1):
-    config_module = import_from_path("config", os.path.join(config_scrapers_folder, "config.py"))
-    scrapers_module = import_from_path("scrapers", os.path.join(config_scrapers_folder, "scrapers.py"))
+def get_new_relevant_jobs(driver, run_record: RunRecord, companies, search_terms, limit_company = None, add_search_term = None, default_sleep = 1):
 
     existing_jobs = defaultdict(set, {key: set(value) for key, value in run_record.existing_jobs.items()})
 
-    relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, config_module, scrapers_module) 
+    relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, companies, search_terms) 
 
     new_relevant_jobs = {}
 
@@ -75,15 +73,12 @@ def get_new_relevant_jobs(driver, run_record: RunRecord, config_scrapers_folder,
 
     return new_relevant_jobs, run_record, verify_no_jobs, errors_message
 
-def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, config_module, scrapers_module):
+def get_relevant_jobs(driver, limit_company, add_search_term, default_sleep, companies, search_terms):
     relevant_jobs: list[tuple[Company, JobPosting]] = []
     skipped_companies = []
     verify_no_jobs = []
     errors: list[tuple[Company, Exception]] = []
 
-    companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
-
-    search_terms = config_module.search_terms
     if add_search_term:
         search_terms.append(add_search_term)
 
@@ -200,6 +195,20 @@ def import_from_path(module_name, file_path):
     spec.loader.exec_module(module)
     return module
 
+def get_companies(config_companies):
+    import common_scrapers
+    import inspect
+    all_scrapers = {}
+    for name, obj in inspect.getmembers(common_scrapers):
+        if inspect.isclass(obj):
+            all_scrapers[name] = obj
+
+    companies = []
+    for company in config_companies:
+        company["jobs_page_class"] = all_scrapers[company["jobs_page_class_name"]]
+        companies.append(Company(**company))
+    return companies
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape new jobs.')
@@ -223,10 +232,22 @@ if __name__ == "__main__":
         options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
+    if args.config_scrapers_folder.endswith(".json"):
+        with open(args.config_scrapers_folder) as f:
+            config = json.load(f)
+            companies = get_companies(config["companies"])
+            search_terms = config["search_terms"]
+    else:
+        config_module = import_from_path("config", os.path.join(args.config_scrapers_folder, "config.py"))
+        scrapers_module = import_from_path("scrapers", os.path.join(args.config_scrapers_folder, "scrapers.py"))
+        companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
+        search_terms = config_module.search_terms
+
     new_relevant_jobs, run_record, verify_no_jobs, errors_message = get_new_relevant_jobs(
         driver, 
         run_record,
-        args.config_scrapers_folder,
+        companies,
+        search_terms,
         args.limit_company,
         args.add_search_term,
         args.default_sleep

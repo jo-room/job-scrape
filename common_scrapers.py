@@ -1,3 +1,4 @@
+import requests
 import json
 from models import *
 from selenium.webdriver.common.by import By
@@ -208,4 +209,62 @@ class SmartRecruitersPage:
                     link=link_url,
                 )
             )
+        return jobs
+
+# Only gets jobs from the last 10 days
+class ClimateTechListPage(JobsPage):
+    @staticmethod
+    def get_jobs(driver):
+        logs = driver.get_log("performance")
+        networks = []
+
+        data = None
+        for log in logs:
+            message = log["message"]
+            if "readSharedViewData" in message:
+                message_dict = json.loads(log["message"])
+                if message_dict["message"]["method"] == "Network.requestWillBeSent":
+                    driver.execute_script("window.stop();")
+                    request_info = message_dict["message"]["params"]["request"]
+                    data = requests.get(request_info["url"], headers = request_info["headers"]).json()
+                    print("got data")
+
+        columns = data["data"]["table"]["columns"]
+        # order determines title composition
+        relevant_column_names = [
+            "Position Title",
+            "Company",
+            "Job Location",
+            "Date first listed",
+            "Remote",
+            # "Company Vertical", values are dict {'valuesByForeignRowId': {'rec505JOieCJNncoi': ['selCodWauUmGOavwy']}, 'foreignRowIdOrder': ['rec505JOieCJNncoi']}
+            # "Org Type", values are dict {'valuesByForeignRowId': {'rec505JOieCJNncoi': 'For-profit'}, 'foreignRowIdOrder': ['rec505JOieCJNncoi']}
+        ]
+
+        column_order_for_other_locations = ["Job Location"] + [x for x in relevant_column_names if x != "Job Location"]
+
+        relevant_column_ids = {name: next(col["id"] for col in columns if col["name"].lower() == name.lower()) for name in relevant_column_names}
+
+        rows = data["data"]["table"]["rows"]
+
+        today = datetime.datetime.now(datetime.timezone.utc)
+        delta = datetime.timedelta(days = 10)
+        time_cutoff = today - delta
+
+        def is_relevant(row):
+            # time created in climatetechlist, not posting time
+            was_created_recently = datetime.datetime.fromisoformat(row["createdTime"]) >= time_cutoff
+            return was_created_recently
+
+        jobs = []
+        for row in rows:
+            if is_relevant(row):
+                job = JobPosting(
+                    title=None,
+                    id=row["id"]
+                )
+                title = ". ".join([row["cellValuesByColumnId"].get(relevant_column_ids[name], "") for name in column_order_for_other_locations])
+                job.title = title
+                jobs.append(job)
+
         return jobs

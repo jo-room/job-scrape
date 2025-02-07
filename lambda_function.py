@@ -11,7 +11,7 @@ from dataclasses import asdict
 from selenium import webdriver
 
 from models import *
-from job_scrape import get_new_relevant_jobs, format_new_jobs_message, format_errors_message
+from job_scrape import get_new_relevant_jobs, format_new_jobs_message, format_errors_message, get_companies
 
 def lambda_handler(event, context, local=False):
     print("event", event)
@@ -52,61 +52,73 @@ def lambda_handler(event, context, local=False):
     s3 = boto3.resource('s3')
     bucket = s3.Bucket(event["aws_config"]["bucket_name"])
 
-    with tempfile.TemporaryDirectory() as tmp_config_scrapers_folder:
-        bucket.download_file(event["aws_config"]["config_file"], os.path.join(tmp_config_scrapers_folder, 'config.py'))
-        bucket.download_file(event["aws_config"]["scrapers_file"], os.path.join(tmp_config_scrapers_folder, 'scrapers.py'))
+    if "config_json" in event["aws_config"]:
+        config_object = s3.Object(event["aws_config"]["bucket_name"], event["aws_config"]["config_json"])
+        config_file_content = config_object.get()['Body'].read().decode('utf-8')
+        config = json.loads(config_file_content)
+        companies = get_companies(config["companies"])
+        search_terms = config["search_terms"]
+    else:
+        with tempfile.TemporaryDirectory() as tmp_config_scrapers_folder:
+            bucket.download_file(event["aws_config"]["config_file"], os.path.join(tmp_config_scrapers_folder, 'config.py'))
+            bucket.download_file(event["aws_config"]["scrapers_file"], os.path.join(tmp_config_scrapers_folder, 'scrapers.py'))
+            config_module = import_from_path("config", os.path.join(tmp_config_scrapers_folder, "config.py"))
+            scrapers_module = import_from_path("scrapers", os.path.join(tmp_config_scrapers_folder, "scrapers.py"))
+            companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
+            search_terms = config_module.search_terms
 
-        run_record_object = s3.Object(event["aws_config"]["bucket_name"], event["aws_config"]["run_record_json"])
-        file_content = run_record_object.get()['Body'].read().decode('utf-8')
-        run_record = RunRecord.from_dict(json.loads(file_content))
+    run_record_object = s3.Object(event["aws_config"]["bucket_name"], event["aws_config"]["run_record_json"])
+    file_content = run_record_object.get()['Body'].read().decode('utf-8')
+    run_record = RunRecord.from_dict(json.loads(file_content))
 
-        new_relevant_jobs, run_record, verify_no_jobs, errors_message = get_new_relevant_jobs(
-            driver,
-            run_record,
-            tmp_config_scrapers_folder,
-            limit_company,
-            temp_term,
-            default_sleep
+    new_relevant_jobs, run_record, verify_no_jobs, errors_message = get_new_relevant_jobs(
+        driver,
+        run_record,
+        companies,
+        search_terms,
+        limit_company,
+        temp_term,
+        default_sleep
+    )
+    return_message = {}
+    
+    sns = boto3.client('sns')
+
+    if len(new_relevant_jobs) > 0:
+        new_jobs_message = format_new_jobs_message(new_relevant_jobs)
+
+        response = sns.publish(
+            TopicArn=event["aws_config"]["sns_topic_arn"],
+            Message=new_jobs_message,
+            Subject='New jobs',
         )
-        return_message = {}
-        
-        sns = boto3.client('sns')
+        print("New jobs:")
+        print(new_jobs_message)
+        return_message["new_jobs"] = new_jobs_message
+    else:
+        print("No new jobs")
 
-        if len(new_relevant_jobs) > 0:
-            new_jobs_message = format_new_jobs_message(new_relevant_jobs)
+    if len(run_record.errors) > 0:
+        print(errors_message)
+        return_message["errors"] = errors_message
+    if run_record.has_new_error():
+        response = sns.publish(
+            TopicArn=event["aws_config"]["sns_topic_arn"],
+            Message=errors_message,
+            Subject='New scrape error(s)',
+        )
 
-            response = sns.publish(
-                TopicArn=event["aws_config"]["sns_topic_arn"],
-                Message=new_jobs_message,
-                Subject='New jobs',
-            )
-            print("New jobs:")
-            print(new_jobs_message)
-            return_message["new_jobs"] = new_jobs_message
-        else:
-            print("No new jobs")
+    if dont_replace_existing:
+        path, extension = os.path.splitext(event["aws_config"]["run_record_json"])
+        run_record_object = s3.Object(event["aws_config"]["bucket_name"], f"{path}_{str(datetime.datetime.now()).replace(" ", "_")}{extension}")
+    if not dont_write_existing:
+        run_record_object.put(Body=json.dumps(asdict(run_record), indent=4))
 
-        if len(run_record.errors) > 0:
-            print(errors_message)
-            return_message["errors"] = errors_message
-        if run_record.has_new_error():
-            response = sns.publish(
-                TopicArn=event["aws_config"]["sns_topic_arn"],
-                Message=errors_message,
-                Subject='New scrape error(s)',
-            )
-
-        if dont_replace_existing:
-            path, extension = os.path.splitext(event["aws_config"]["run_record_json"])
-            run_record_object = s3.Object(event["aws_config"]["bucket_name"], f"{path}_{str(datetime.datetime.now()).replace(" ", "_")}{extension}")
-        if not dont_write_existing:
-            run_record_object.put(Body=json.dumps(asdict(run_record), indent=4))
-
-        print("finished")
-        return {
-            'statusCode': 200,
-            'body': return_message
-        }
+    print("finished")
+    return {
+        'statusCode': 200,
+        'body': return_message
+    }
 
 
 if __name__ == "__main__":

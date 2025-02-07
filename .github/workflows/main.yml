@@ -39,3 +39,37 @@ jobs:
               id: update-lambda
               run: |
                   aws lambda update-function-code --function-name job-scrape --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/job-scrape:latest
+
+    deploy-restricted:
+        name: Deploy Restricted
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Mask resources
+              run: |
+                echo "::add-mask::${{ secrets.AWS_ACCOUNT_ID_RESTRICTED }}"
+
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_RESTRICTED }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_RESTRICTED }}
+                  aws-region: ${{ secrets.AWS_REGION_RESTRICTED }}
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Build Docker image
+              uses: docker/build-push-action@v6
+              with:
+                push: true
+                tags: ${{ secrets.AWS_ACCOUNT_ID_RESTRICTED }}.dkr.ecr.${{ secrets.AWS_REGION_RESTRICTED }}.amazonaws.com/job-scrape:latest
+
+            - name: Update AWS Lambda function
+              id: update-lambda
+              run: |
+                  aws lambda update-function-code --function-name job-scrape --image-uri ${{ secrets.AWS_ACCOUNT_ID_RESTRICTED }}.dkr.ecr.${{ secrets.AWS_REGION_RESTRICTED }}.amazonaws.com/job-scrape:latest
