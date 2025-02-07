@@ -11,7 +11,7 @@ from dataclasses import asdict
 from selenium import webdriver
 
 from models import *
-from job_scrape import get_new_relevant_jobs, format_new_jobs_message, format_errors_message, get_companies
+from job_scrape import get_new_relevant_jobs, format_new_jobs_message, format_errors_message, get_companies, import_from_path
 
 def lambda_handler(event, context, local=False):
     print("event", event)
