@@ -42,6 +42,7 @@ class Company:
     jobs_page: str = None
     jobs_page_class: any = None
     jobs_page_class_name: str = None
+    config: dict = None
     load_sleep: int = None
     scroll_sleep: int = None
     diff_page: bool = False

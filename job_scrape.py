@@ -145,7 +145,7 @@ def get_company_relevant_jobs(driver, company, search_terms, default_sleep) -> (
         if "Verify you are human" in driver.find_element(By.TAG_NAME, 'body').text:
             raise Exception(f"Human verification hit. There are probably ways to bypass but I haven't figured/built that out yet. Text: {driver.find_element(By.TAG_NAME, 'body').text.replace("\n", " ")}")
         if company.jobs_page_class:
-            jobs = company.jobs_page_class.get_jobs(driver)
+            jobs = company.jobs_page_class.get_jobs(driver, company.config)
             if len(jobs) > 0:
                 jobs_page_status = JobsPageStatus.SOME_JOB_FOUND
             relevant_jobs = [job for job in jobs if title_is_relevant(company, job.title, search_terms)]

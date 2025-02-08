@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 
 class GreenhousePage:
     @staticmethod
-    def get_jobs(driver): 
+    def get_jobs(driver, config=None):
         job_elements = driver.find_elements(By.CLASS_NAME, 'job-post')
         jobs = []
         for job in job_elements:
@@ -21,7 +21,7 @@ class GreenhousePage:
 
 class GreenhouseEmbeddedStandalonePage:
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         job_elements = driver.find_elements(By.CLASS_NAME, 'opening')
         jobs = []
         for job in job_elements:
@@ -37,7 +37,7 @@ class GreenhouseEmbeddedStandalonePage:
 
 class GreenhouseEmbeddedPage:
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         time.sleep(2)
         greenhouse_iframe = driver.find_element(By.ID, "grnhse_iframe")
         assert greenhouse_iframe.tag_name == "iframe"
@@ -46,7 +46,7 @@ class GreenhouseEmbeddedPage:
 
 class LeverCoPage:
     @staticmethod
-    def get_jobs(driver): 
+    def get_jobs(driver, config=None):
         job_elements = driver.find_elements(By.CLASS_NAME, 'posting')
         jobs = []
         for job in job_elements:
@@ -62,7 +62,7 @@ class LeverCoPage:
 
 class BambooPage:
     @staticmethod
-    def get_jobs(driver): 
+    def get_jobs(driver, config=None):
         job_elements = driver.find_element(By.TAG_NAME, 'main').find_elements(By.TAG_NAME, "li")
         jobs = []
         for job in job_elements:
@@ -76,7 +76,7 @@ class BambooPage:
 
 class WorkablePage:
     @staticmethod
-    def get_jobs(driver): 
+    def get_jobs(driver, config=None):
         container = driver.find_element(By.ID, "jobs")
         job_elements = container.find_elements(By.XPATH, '//li[@data-ui="job"]')
         jobs = []
@@ -92,7 +92,7 @@ class WorkablePage:
 
 class WorkdayPage:
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         time.sleep(1)
 
         PAUSE_TIME = 2
@@ -133,7 +133,7 @@ class WorkdayPage:
 
 class RipplingPage:
     @staticmethod
-    def get_jobs(driver): 
+    def get_jobs(driver, config=None):
         all_anchors = driver.find_elements(By.TAG_NAME, 'a')
         job_elements = [el.find_element(By.XPATH, './../..') for el in all_anchors if 'jobs' in el.get_attribute("href") and el.text != "Apply"]
         jobs = []
@@ -150,7 +150,7 @@ class RipplingPage:
 
 class AshbyPage:
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         root = driver.find_element(By.ID, 'root')
         containers = root.find_elements(By.CLASS_NAME, 'ashby-job-posting-brief-list')
         jobs = []
@@ -169,7 +169,7 @@ class AshbyPage:
 
 class AshbyEmbeddedPage:
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         ashby_iframe = driver.find_element(By.ID, "ashby_embed_iframe")
         assert ashby_iframe.tag_name == "iframe"
         driver.switch_to.frame(ashby_iframe)
@@ -179,7 +179,7 @@ class AshbyEmbeddedPage:
 
 class ApplyToJobPage:
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         container = driver.find_element(By.CLASS_NAME, 'jobs-list')
         job_elements = container.find_elements(By.CSS_SELECTOR, 'li.list-group-item')
         jobs = []
@@ -196,7 +196,7 @@ class ApplyToJobPage:
 
 class SmartRecruitersPage:
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         container = driver.find_element(By.CLASS_NAME, 'openings-body')
         job_elements = container.find_elements(By.CSS_SELECTOR, 'li.opening-job')
         jobs = []
@@ -211,10 +211,28 @@ class SmartRecruitersPage:
             )
         return jobs
 
-# Only gets jobs from the last 10 days
+
+"""
+Only gets jobs from the last 10 days
+
+All config keys optional
+"config": {
+    "exclude_search_terms": [ "intern", "QA"],
+    "excluded_companies": ["tesla"],
+    "national_locations": ["Remote", "Multiple", "Any", "United States", "US", "USA", "U.S.", "U.S.A."],
+    "local_locations": ["NY", "NYC"],
+    "only_include_local_or_remote": true
+}
+
+exclude_search_terms: If specified, will not include if title contains any of these terms
+excluded_companies: If specified, will not include if company
+national_locations: If specified, will only include if location contains any of these terms, or is empty. Locations are CASE SENTITIVE.
+local_locations: If specified, will label with a 🏠 emoji. Locations are CASE SENTITIVE.
+only_include_local_or_remote: If true, will only include if location is in local_locations, or remote allowed
+"""
 class ClimateTechListPage(JobsPage):
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         logs = driver.get_log("performance")
         networks = []
 
@@ -251,20 +269,74 @@ class ClimateTechListPage(JobsPage):
         delta = datetime.timedelta(days = 10)
         time_cutoff = today - delta
 
-        def is_relevant(row):
-            # time created in climatetechlist, not posting time
-            was_created_recently = datetime.datetime.fromisoformat(row["createdTime"]) >= time_cutoff
-            return was_created_recently
+        def has_relevant_title(row):
+            if "exclude_search_terms" in config:
+                lower_title = row["cellValuesByColumnId"][relevant_column_ids["Position Title"]].lower()
+                if any(term in lower_title for term in set(config["exclude_search_terms"])):
+                    return False
 
-        jobs = []
+            return True
+
+        def has_relevant_location(row):
+            if "Working Student Data Analysis" in row["cellValuesByColumnId"][relevant_column_ids["Position Title"]]:
+                breakpoint()
+            # Assumes capitalization
+            location = row["cellValuesByColumnId"][relevant_column_ids["Job Location"]]
+
+            if "excluded_locations" in config and any(term in location for term in set(config["excluded_locations"])):
+                return False
+            
+            if location.strip() == "":
+                return True
+
+            if "local_locations" in config and any(term in location for term in set(config["local_locations"])):
+                return True
+                
+            if "national_locations" in config:
+                if any(term in location for term in set(config["national_locations"])):
+                    return True
+                else:
+                    return False
+
+            return True
+
+        def should_exclude_company(row):
+            if "excluded_companies" in config:
+                return row["cellValuesByColumnId"][relevant_column_ids["Company"]] in set(config["excluded_companies"])
+
+        def is_relevant(row):
+            was_created_recently = datetime.datetime.fromisoformat(row["createdTime"]) >= time_cutoff
+
+            # dynamically calls
+            return was_created_recently and has_relevant_location(row) and has_relevant_title(row) and not should_exclude_company(row)
+
+        local_jobs = []
+        remote_jobs = []
+        _other_jobs = []
         for row in rows:
+            # time created in climatetechlist, not posting time
             if is_relevant(row):
                 job = JobPosting(
                     title=None,
                     id=row["id"]
                 )
-                title = ". ".join([row["cellValuesByColumnId"].get(relevant_column_ids[name], "") for name in column_order_for_other_locations])
-                job.title = title
-                jobs.append(job)
+                if "local_locations" in config and any(term in row["cellValuesByColumnId"][relevant_column_ids["Job Location"]] for term in set(config["local_locations"])):
+                    title = ". ".join([row["cellValuesByColumnId"].get(relevant_column_ids[name], "") for name in relevant_column_names])
+                    job.title = f"🏠 {title}"
+                    local_jobs.append(job)
+                elif "Remote" in row["cellValuesByColumnId"][relevant_column_ids["Remote"]]:
+                    title = ". ".join([row["cellValuesByColumnId"].get(relevant_column_ids[name], "") for name in relevant_column_names])
+                    job.title = f"💻 {title}"
+                    remote_jobs.append(job)
+                else:
+                    # put job location first
+                    title = ". ".join([row["cellValuesByColumnId"].get(relevant_column_ids[name], "") for name in column_order_for_other_locations])
+                    job.title = title
+                    _other_jobs.append(job)
 
-        return jobs
+        # ignore other jobs
+        if "only_include_local_or_remote" in config and config["only_include_local_or_remote"]:
+            return local_jobs + remote_jobs    
+        else:
+            return local_jobs + remote_jobs + _other_jobs
+
