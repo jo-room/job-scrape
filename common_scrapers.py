@@ -278,8 +278,6 @@ class ClimateTechListPage(JobsPage):
             return True
 
         def has_relevant_location(row):
-            if "Working Student Data Analysis" in row["cellValuesByColumnId"][relevant_column_ids["Position Title"]]:
-                breakpoint()
             # Assumes capitalization
             location = row["cellValuesByColumnId"][relevant_column_ids["Job Location"]]
 
