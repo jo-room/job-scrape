@@ -48,8 +48,24 @@ def lambda_handler(event, context, local=False):
     else:
         driver = webdriver.Chrome(options=options, service=service)
     
-    # So that we can update the config without repackaging and deploying the image
-    s3 = boto3.resource('s3')
+    # Restrict session permissions to only access user resources
+    username = event["aws_config"]["username"]
+    sts = boto3.client('sts')
+    assumed_role_object = sts.assume_role(
+        RoleArn=event["aws_config"]["execution_role_arn"],
+        RoleSessionName="role-session" + username,
+        Policy=get_inline_session_policy(event["aws_config"]["bucket_name"], username, event["aws_config"]["sns_topic_arn"]),
+        DurationSeconds=1000
+    )
+    credentials = assumed_role_object['Credentials']
+    session = boto3.Session(
+        aws_access_key_id=credentials['AccessKeyId'],
+        aws_secret_access_key=credentials['SecretAccessKey'],
+        aws_session_token=credentials['SessionToken']
+    )
+
+
+    s3 = session.resource('s3')
     bucket = s3.Bucket(event["aws_config"]["bucket_name"])
 
     if "config_json" in event["aws_config"]:
@@ -60,10 +76,17 @@ def lambda_handler(event, context, local=False):
         search_terms = config["search_terms"]
     else:
         with tempfile.TemporaryDirectory() as tmp_config_scrapers_folder:
-            bucket.download_file(event["aws_config"]["config_file"], os.path.join(tmp_config_scrapers_folder, 'config.py'))
-            bucket.download_file(event["aws_config"]["scrapers_file"], os.path.join(tmp_config_scrapers_folder, 'scrapers.py'))
-            config_module = import_from_path("config", os.path.join(tmp_config_scrapers_folder, "config.py"))
-            scrapers_module = import_from_path("scrapers", os.path.join(tmp_config_scrapers_folder, "scrapers.py"))
+            config_path = os.path.join(tmp_config_scrapers_folder, 'config.py')
+            scrapers_path = os.path.join(tmp_config_scrapers_folder, 'scrapers.py')
+            bucket.download_file(event["aws_config"]["config_file"], config_path)
+            bucket.download_file(event["aws_config"]["scrapers_file"], scrapers_path)
+
+            # This is not actually in any way foolproof security, but a sanity check
+            assert_no_boto(config_path)
+            assert_no_boto(scrapers_path)
+
+            config_module = import_from_path("config", config_path)
+            scrapers_module = import_from_path("scrapers", scrapers_path)
             companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
             search_terms = config_module.search_terms
 
@@ -82,7 +105,7 @@ def lambda_handler(event, context, local=False):
     )
     return_message = {}
     
-    sns = boto3.client('sns')
+    sns = session.client('sns')
 
     if len(new_relevant_jobs) > 0:
         new_jobs_message = format_new_jobs_message(new_relevant_jobs)
@@ -120,6 +143,49 @@ def lambda_handler(event, context, local=False):
         'body': return_message
     }
 
+def assert_no_boto(file_path):
+    with open(file_path) as f:
+        assert "boto" not in f.read()
+
+def get_inline_session_policy(bucket_name, username, sns_topic_arn):
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Action": [
+                    "s3:ListBucket"
+                ],
+                "Effect": "Allow",
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}"
+                ],
+                "Condition": {
+                    "StringLike": {
+                        "s3:prefix": [
+                            f"{username}/*"
+                        ]
+                    }
+                }
+            },
+            {
+                "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject"
+                ],
+                "Effect": "Allow",
+                "Resource": [
+                    f"arn:aws:s3:::{bucket_name}/{username}/*"
+                ]
+            },
+            {
+                "Action": "sns:Publish",
+                "Effect": "Allow",
+                "Resource": f"{sns_topic_arn}"
+            }
+        ]
+    }
+    policy_json = json.dumps(policy)
+    return policy_json
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run with aws resources to scrape new jobs and notify.')
