@@ -19,9 +19,8 @@ Resources:
           ScheduleExpressionTimezone: America/New_York
           Target:
             Arn: arn:aws:lambda:<AWS REGION>:<AWS ACCOUNT NUMBER>:function:job-scrape
-            Input: !Sub '{ "aws_config": { "username": "${UserName}", "bucket_name": "<BUCKET NAME>", "config_file":
-              "${UserName}/config.py", "scrapers_file":
-              "${UserName}/scrapers.py", "run_record_json":
+            Input: !Sub '{ "aws_config": { "username": "${UserName}", "bucket_name": "<BUCKET NAME>", "config_json":
+              "${UserName}/config.json", "run_record_json":
               "${UserName}/run_record.json", "sns_topic_arn":
               "arn:aws:sns:<AWS REGION>:<AWS ACCOUNT NUMBER>:job-scrape-${UserName}", "execution_role_arn":
               "<ROLE ARN to assume within the lambda, with permission to read to bucket and publish to sns>" } }'

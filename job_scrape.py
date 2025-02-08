@@ -212,7 +212,7 @@ def get_companies(config_companies):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape new jobs.')
-    parser.add_argument('config_scrapers_folder', type=str, help='Path to folder with config.py and scrapers.py')
+    parser.add_argument('config_json', type=str, help='Path to config.json file')
     parser.add_argument('run_record_json', type=str, help='Path to file storing history of prior run(s)')
     parser.add_argument('--limit_company', type=str, default=None, help='Search only companies that contain this string in their name')
     parser.add_argument('--add_search_term', type=str, default=None, help='Search term to add in considering a job relevant')
@@ -232,14 +232,14 @@ if __name__ == "__main__":
         options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
-    if args.config_scrapers_folder.endswith(".json"):
-        with open(args.config_scrapers_folder) as f:
+    if args.config_json.endswith(".json"):
+        with open(args.config_json) as f:
             config = json.load(f)
             companies = get_companies(config["companies"])
             search_terms = config["search_terms"]
     else:
-        config_module = import_from_path("config", os.path.join(args.config_scrapers_folder, "config.py"))
-        scrapers_module = import_from_path("scrapers", os.path.join(args.config_scrapers_folder, "scrapers.py"))
+        config_module = import_from_path("config", os.path.join(args.config_json, "config.py"))
+        scrapers_module = import_from_path("scrapers", os.path.join(args.config_json, "scrapers.py"))
         companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
         search_terms = config_module.search_terms
 

@@ -1,0 +1,31 @@
+{
+	"search_terms": ["software", "developer", "engineer", "frontend", "front end", "front-end", "backend", "back end", "back-end", "fullstack", "full stack", "full-stack"],
+	"companies": [
+		{
+			"name": "Climate Tech List",
+			"jobs_page": "https://airtable.com/appo9WyVgYvpap792/shrbAhhxKqvWjaJMs",
+			"jobs_page_class_name": "ClimateTechListPage"
+		},
+		{
+			"name": "Example Company With All Keys",
+			"jobs_page": "https://www.example.com/jobs",
+			"jobs_page_class": "LeverCoPage",
+
+			"active": false,
+			"no_jobs_phrase": "Sorry, we couldn't find anything here",
+			"relevant_search_terms": ["carpenter", "rocket scientist"],
+			"load_sleep": 1,
+			"scroll_sleep": 1,
+
+			"diff_page": false,
+			"careers_landing_page": "",
+			"location": "",
+			"notes": "",
+			"tags": [""],
+			"what": "",
+			"referral": "",
+			"application_history": "",
+
+		}
+	]
+}

@@ -24,8 +24,7 @@
             ],
             "Effect": "Allow",
             "Resource": [
-                "arn:aws:s3:::<BUCKET NAME>/${aws:username}/config.py",
-                "arn:aws:s3:::<BUCKET NAME>/${aws:username}/scrapers.py",
+                "arn:aws:s3:::<BUCKET NAME>/${aws:username}/config.json",
                 "arn:aws:s3:::<BUCKET NAME>/${aws:username}/scheduleConfig.json",
                 "arn:aws:s3:::<BUCKET NAME>/${aws:username}/run_record.json"
             ]
