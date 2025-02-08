@@ -1,9 +1,9 @@
 """
 Lambda function
 Triggered by all object create events with suffix `scheduleConfig.json`
-Assumes ARN_ROOT lambda environment variable that excludes a trailing `:`
+Assumes ARN_ROOT lambda environment variable that EXCLUDES a trailing `:`
 
-Currently manually copied to lambda to deploy
+Currently manually copied to lambda to deploy, then configure the above
 """
 
 import json
@@ -59,13 +59,7 @@ def update_schedule_from_config(bucket, key, should_email=True) -> bool:
             )
         return False
 
-    schedules = scheduler.list_schedules(GroupName='job-scrape')["Schedules"]
-
-    schedule_name_prefix = f"job-scrape-Schedule{username.replace('-', '')}-"
-    matching_schedules = [schedule for schedule in schedules if schedule["Name"].startswith(schedule_name_prefix)]
-    assert len(matching_schedules) == 1
-    schedule = scheduler.get_schedule(Name=matching_schedules[0]["Name"], GroupName="job-scrape")
-
+    schedule = scheduler.get_schedule(Name=f"job-scrape-{username}", GroupName="job-scrape")
     schedule_update = copy.deepcopy(schedule)
     for key in ["ResponseMetadata", "Arn", "CreationDate", "LastModificationDate"]:
         del schedule_update[key]

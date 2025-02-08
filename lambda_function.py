@@ -48,7 +48,7 @@ def lambda_handler(event, context, local=False):
     else:
         driver = webdriver.Chrome(options=options, service=service)
     
-    # Restrict session permissions to only access user resources
+    # Assume role with permissions access user resources, and only user resources
     username = event["aws_config"]["username"]
     sts = boto3.client('sts')
     assumed_role_object = sts.assume_role(
