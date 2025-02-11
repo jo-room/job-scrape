@@ -168,10 +168,14 @@ def has_jobs(driver, company) -> (bool, JobsPageStatus):
     return True, JobsPageStatus.NO_JOBS_FOUND
 
 def title_is_relevant(company, title, search_terms) -> bool:
+    terms_to_use = search_terms
     if company.relevant_search_terms:
-        return any(search_term.lower() in title.lower() for search_term in company.relevant_search_terms)
+        terms_to_use = company.relevant_search_terms
 
-    return any(search_term.lower() in title.lower() for search_term in search_terms)
+    if len(terms_to_use) == 0:
+        return True
+
+    return any(search_term.lower() in title.lower() for search_term in terms_to_use)
 
 def format_new_jobs_message(new_jobs: dict[str, dict[str, any]]) -> str:
     message = ""

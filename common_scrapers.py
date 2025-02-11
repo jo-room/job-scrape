@@ -219,14 +219,14 @@ All config keys optional
 "config": {
     "exclude_search_terms": [ "intern", "QA"],
     "excluded_companies": ["tesla"],
-    "national_locations": ["Remote", "Multiple", "Any", "United States", "US", "USA", "U.S.", "U.S.A."],
+    "countries": ["Remote", "Multiple Locations", "Anywhere", "United States"],
     "local_locations": ["NY", "NYC"],
     "only_include_local_or_remote": true
 }
 
 exclude_search_terms: If specified, will not include if title contains any of these terms
 excluded_companies: If specified, will not include if company
-national_locations: If specified, will only include if location contains any of these terms, or is empty. Locations are CASE SENTITIVE.
+countries: If specified, will only include if the Country column contains any of these terms, or is empty. Locations are CASE SENTITIVE.
 local_locations: If specified, will label with a 🏠 emoji. Locations are CASE SENTITIVE.
 only_include_local_or_remote: If true, will only include if location is in local_locations, or remote allowed
 """
@@ -252,6 +252,7 @@ class ClimateTechListPage(JobsPage):
         relevant_column_names = [
             "Position Title",
             "Company",
+            "Country",
             "Job Location",
             "Date first listed",
             "Remote",
@@ -262,6 +263,9 @@ class ClimateTechListPage(JobsPage):
         column_order_for_other_locations = ["Job Location"] + [x for x in relevant_column_names if x != "Job Location"]
 
         relevant_column_ids = {name: next(col["id"] for col in columns if col["name"].lower() == name.lower()) for name in relevant_column_names}
+
+        country_choices = next(col["typeOptions"]["choices"] for col in columns if col["name"] == "Country")
+        id_to_country = {key: value["name"] for key, value in country_choices.items()}
 
         rows = data["data"]["table"]["rows"]
 
@@ -290,8 +294,13 @@ class ClimateTechListPage(JobsPage):
             if "local_locations" in config and any(term in location for term in set(config["local_locations"])):
                 return True
                 
-            if "national_locations" in config:
-                if any(term in location for term in set(config["national_locations"])):
+            if "countries" in config:
+                if relevant_column_ids["Country"] not in row["cellValuesByColumnId"]:
+                    # no Country data
+                    return True
+                if not len(row["cellValuesByColumnId"][relevant_column_ids["Country"]]) > 0:
+                    print(row["cellValuesByColumnId"][relevant_column_ids["Country"]])
+                if len({id_to_country[country] for country in row["cellValuesByColumnId"][relevant_column_ids["Country"]]}.intersection(set(config["countries"]))) > 0:
                     return True
                 else:
                     return False
@@ -308,6 +317,15 @@ class ClimateTechListPage(JobsPage):
             # dynamically calls
             return was_created_recently and has_relevant_location(row) and has_relevant_title(row) and not should_exclude_company(row)
 
+        def format_title(row, column_names):
+            cols = []
+            for name in column_names:
+                if name == "Country" and relevant_column_ids["Country"] in row["cellValuesByColumnId"]:
+                    cols.append(", ".join([id_to_country[country_id] for country_id in row["cellValuesByColumnId"][relevant_column_ids["Country"]]]))
+                else:
+                    cols.append(row["cellValuesByColumnId"].get(relevant_column_ids[name], ""))
+            return ". ".join(cols)
+
         local_jobs = []
         remote_jobs = []
         _other_jobs = []
@@ -319,16 +337,16 @@ class ClimateTechListPage(JobsPage):
                     id=row["id"]
                 )
                 if "local_locations" in config and any(term in row["cellValuesByColumnId"][relevant_column_ids["Job Location"]] for term in set(config["local_locations"])):
-                    title = ". ".join([row["cellValuesByColumnId"].get(relevant_column_ids[name], "") for name in relevant_column_names])
+                    title = format_title(row, relevant_column_names)
                     job.title = f"🏠 {title}"
                     local_jobs.append(job)
                 elif "Remote" in row["cellValuesByColumnId"][relevant_column_ids["Remote"]]:
-                    title = ". ".join([row["cellValuesByColumnId"].get(relevant_column_ids[name], "") for name in relevant_column_names])
+                    title = format_title(row, relevant_column_names)
                     job.title = f"💻 {title}"
                     remote_jobs.append(job)
                 else:
                     # put job location first
-                    title = ". ".join([row["cellValuesByColumnId"].get(relevant_column_ids[name], "") for name in column_order_for_other_locations])
+                    title = format_title(row, column_order_for_other_locations)
                     job.title = title
                     _other_jobs.append(job)
 
