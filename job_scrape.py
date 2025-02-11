@@ -199,13 +199,17 @@ def import_from_path(module_name, file_path):
     spec.loader.exec_module(module)
     return module
 
-def get_companies(config_companies):
+def get_companies(config_companies, additional_scrapers_module=None):
     import common_scrapers
     import inspect
     all_scrapers = {}
     for name, obj in inspect.getmembers(common_scrapers):
         if inspect.isclass(obj):
             all_scrapers[name] = obj
+    if additional_scrapers_module:
+        for name, obj in inspect.getmembers(additional_scrapers_module):
+            if inspect.isclass(obj):
+                all_scrapers[name] = obj
 
     companies = []
     for company in config_companies:
@@ -216,8 +220,9 @@ def get_companies(config_companies):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape new jobs.')
-    parser.add_argument('config_json', type=str, help='Path to config.json file')
+    parser.add_argument('config_file', type=str, help='Path to config.json or config.py file')
     parser.add_argument('run_record_json', type=str, help='Path to file storing history of prior run(s)')
+    parser.add_argument('--add_scrapers_file', type=str, default=None, help='Path to file with additional scrapers')
     parser.add_argument('--limit_company', type=str, default=None, help='Search only companies that contain this string in their name')
     parser.add_argument('--add_search_term', type=str, default=None, help='Search term to add in considering a job relevant')
     parser.add_argument('--dont_write_run_record', action='store_true', help="Don't write the run record file")
@@ -236,15 +241,19 @@ if __name__ == "__main__":
         options.add_argument("--headless=new")
     driver = webdriver.Chrome(options=options)
 
-    if args.config_json.endswith(".json"):
-        with open(args.config_json) as f:
+    if args.add_scrapers_file:
+        additional_scrapers_module = import_from_path("scrapers", args.add_scrapers_file)
+    else:
+        additional_scrapers_module = None
+
+    if args.config_file.endswith(".json"):
+        with open(args.config_file) as f:
             config = json.load(f)
-            companies = get_companies(config["companies"])
+            companies = get_companies(config["companies"], additional_scrapers_module)
             search_terms = config["search_terms"]
     else:
-        config_module = import_from_path("config", os.path.join(args.config_json, "config.py"))
-        scrapers_module = import_from_path("scrapers", os.path.join(args.config_json, "scrapers.py"))
-        companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
+        config_module = import_from_path("config", os.path.join(args.config_file, "config.py"))
+        companies = [Company(**company) for company in config_module.get_companies(additional_scrapers_module)]
         search_terms = config_module.search_terms
 
     new_relevant_jobs, run_record, verify_no_jobs, errors_message = get_new_relevant_jobs(

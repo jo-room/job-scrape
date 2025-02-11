@@ -68,27 +68,32 @@ def lambda_handler(event, context, local=False):
     s3 = session.resource('s3')
     bucket = s3.Bucket(event["aws_config"]["bucket_name"])
 
-    if "config_json" in event["aws_config"]:
-        config_object = s3.Object(event["aws_config"]["bucket_name"], event["aws_config"]["config_json"])
-        config_file_content = config_object.get()['Body'].read().decode('utf-8')
-        config = json.loads(config_file_content)
-        companies = get_companies(config["companies"])
-        search_terms = config["search_terms"]
-    else:
-        with tempfile.TemporaryDirectory() as tmp_config_scrapers_folder:
-            config_path = os.path.join(tmp_config_scrapers_folder, 'config.py')
+    with tempfile.TemporaryDirectory() as tmp_config_scrapers_folder:
+        if "scrapers_file" in event["aws_config"]:
             scrapers_path = os.path.join(tmp_config_scrapers_folder, 'scrapers.py')
-            bucket.download_file(event["aws_config"]["config_file"], config_path)
             bucket.download_file(event["aws_config"]["scrapers_file"], scrapers_path)
+            assert_no_boto(scrapers_path)
+            additional_scrapers_module = import_from_path("scrapers", scrapers_path)
+        else:
+            additional_scrapers_module = None
 
+        if "config_json" in event["aws_config"]:
+            config_object = s3.Object(event["aws_config"]["bucket_name"], event["aws_config"]["config_json"])
+            config_file_content = config_object.get()['Body'].read().decode('utf-8')
+            config = json.loads(config_file_content)
+            companies = get_companies(config["companies"], additional_scrapers_module)
+            search_terms = config["search_terms"]
+        else:
+            assert "config_file" in event["aws_config"]
+            config_path = os.path.join(tmp_config_scrapers_folder, 'config.py')
+            bucket.download_file(event["aws_config"]["config_file"], config_path)
             # This is not actually in any way foolproof security, but a sanity check
             assert_no_boto(config_path)
-            assert_no_boto(scrapers_path)
 
             config_module = import_from_path("config", config_path)
-            scrapers_module = import_from_path("scrapers", scrapers_path)
-            companies = [Company(**company) for company in config_module.get_companies(scrapers_module)]
+            companies = [Company(**company) for company in config_module.get_companies(additional_scrapers_module)]
             search_terms = config_module.search_terms
+
 
     run_record_object = s3.Object(event["aws_config"]["bucket_name"], event["aws_config"]["run_record_json"])
     file_content = run_record_object.get()['Body'].read().decode('utf-8')
