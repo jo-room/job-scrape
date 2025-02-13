@@ -64,19 +64,19 @@ def update_schedule_from_config(bucket, key, should_email=True) -> bool:
     for key in ["ResponseMetadata", "Arn", "CreationDate", "LastModificationDate"]:
         del schedule_update[key]
 
-    default_config = {
-        "enabled": True,
-        "hour": 6,
-        "weekends": False,
-    }
+    # default_config = {
+    #     "enabled": True,
+    #     "hour": 6,
+    #     "weekends": False,
+    # }
 
-    hour = config.get("hour", default_config["hour"])
-    day = "*" if config.get("weekends", default_config["weekends"]) else "2-6"
-    schedule_update["State"] = "ENABLED" if config.get("enabled", default_config["enabled"]) else "DISABLED"
-    schedule_update["ScheduleExpression"] = f'cron(0 {hour} ? * {day} *)'
+    hours = config["hour"] if isinstance(config["hour"], int) else ",".join([str(hour) for hour in config["hour"]])
+    day = "*" if config["weekends"] else "2-6"
+    schedule_update["State"] = "ENABLED" if config["enabled"] else "DISABLED"
+    schedule_update["ScheduleExpression"] = f'cron(0 {hours} ? * {day} *)'
 
     response = scheduler.update_schedule(**schedule_update)
-    message = f'Updated {username} schedule to {schedule_update["State"]} every {hour}:00 {"including" if config.get("weekends", default_config["weekends"]) else "excluding"} weekends.'
+    message = f'Updated {username} schedule to {schedule_update["State"]} on hour {hours} {"including" if config["weekends"] else "excluding"} weekends.'
     print(message)
 
     if should_email:
@@ -88,13 +88,25 @@ def update_schedule_from_config(bucket, key, should_email=True) -> bool:
     return True
 
 def validate_config(config):
+    def validate_hour(hour):
+        if not isinstance(hour, int):
+            return f'"hour" {hour} must be an integer'
+        if hour < 0 or hour > 23:
+            return f'"hour" {hour} must be between 0 (midnight) and 23 inclusive'
+        return None
+
     errors = []
     if not (config["enabled"] == True or config["enabled"] == False):
         errors.append('"enabled" must be true or false (lower case, no quotes)')
-    if not isinstance(config["hour"], int):
-        errors.append('"hour" must be an integer')
-    if config["hour"] < 0 or config["hour"] > 23:
-        errors.append('"hour" must be between 0 (midnight) and 23 inclusive')
+    if isinstance(config["hour"], list):
+        for hour in config["hour"]:
+            error = validate_hour(hour)
+            if error:
+                errors.append(error)
+    else:
+        error = validate_hour(config["hour"])
+        if error:
+            errors.append(error)
     if not (config["weekends"] == True or config["weekends"] == False):
         errors.append('"weekends" must be true or false (lower case, no quotes)')
     return errors
