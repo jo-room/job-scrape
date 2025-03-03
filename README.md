@@ -41,6 +41,9 @@ python3 job_scrape.py configs/config.json data/run_record.json
 # Limit search to company name
 python3 job_scrape.py configs/config.json data/run_record.json --limit_company "example company name"
 
+# Include custom scrapers
+python3 job_scrape.py configs/config.json data/run_record.json --add_scrapers_file configs/scrapers.py
+
 # Run headless (i.e. without opening Chrome)
 python3 job_scrape.py configs/config.json data/run_record.json --headless
 
