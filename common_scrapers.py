@@ -2,6 +2,7 @@ import requests
 import json
 from models import *
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 
 class GreenhousePage:
     @staticmethod
@@ -211,15 +212,39 @@ class SmartRecruitersPage:
             )
         return jobs
 
+"""
+Only clicks Load More max 5 times.
+Chose to cap because long runs can make the scraper bug out with some devtools detached error.
+And at a weekdays scrape rate, 5 clicks usually goes far back enough for the frequency of new jobs being posted.
+"""
 class BitsInBioPage:
     @staticmethod
     def get_jobs(driver, config=None):
-        container = driver.find_element(By.ID, 'jobs')
-        job_elements = container.find_elements(By.CLASS_NAME, 'MuiPaper-root')
+        PAUSE_TIME = 1
+        MAX_LOAD_MORE = 5
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll to bottom
+        time.sleep(PAUSE_TIME)
+
+        click_counter = 0
+        while click_counter < MAX_LOAD_MORE and len(driver.find_elements(By.XPATH, '//a[@aria-label="Next Page"]')) > 0 and driver.find_element(By.XPATH, '//a[@aria-label="Next Page"]').is_displayed():
+            load_more = driver.find_element(By.XPATH, '//a[@aria-label="Next Page"]')
+            ActionChains(driver).move_to_element(load_more).perform()
+            load_more.click()
+
+            time.sleep(PAUSE_TIME)
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # Scroll to bottom
+            time.sleep(PAUSE_TIME)
+            click_counter += 1
+ 
+        print("Bits in Bio clicked next", click_counter, f"times (capped at {MAX_LOAD_MORE})")
+
+        container = driver.find_element(By.CLASS_NAME, 'job-list')
+        job_elements = container.find_elements(By.CLASS_NAME, 'job-item')
         jobs = []
         for job in job_elements:
+            button_row = job.find_element(By.CLASS_NAME, "faq-answer").find_element(By.CLASS_NAME, "button-row")
             links = [el for el in job.find_elements(By.TAG_NAME, "a")]
-            link_el = next((el for el in links if el.get_attribute("textContent") == "Apply"), None)
+            link_el = next((el for el in links if el.get_attribute("textContent") == "Apply Now"), None)
             if not link_el:
                 link_el = next((el for el in links if el.get_attribute("textContent") == "Contact"), None)
                 assert link_el, "Error finding Apply or Contact"
@@ -227,7 +252,7 @@ class BitsInBioPage:
 
             jobs.append(
                 JobPosting(
-                    title=job.find_element(By.CLASS_NAME, "MuiAccordionSummary-content").text,
+                    title=job.text,
                     id=link_url,
                     link=link_url,
                 )
