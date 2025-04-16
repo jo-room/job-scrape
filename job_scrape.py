@@ -252,7 +252,7 @@ if __name__ == "__main__":
             companies = get_companies(config["companies"], additional_scrapers_module)
             search_terms = config["search_terms"]
     else:
-        config_module = import_from_path("config", os.path.join(args.config_file, "config.py"))
+        config_module = import_from_path("config", args.config_file)
         companies = [Company(**company) for company in config_module.get_companies(additional_scrapers_module)]
         search_terms = config_module.search_terms
 
