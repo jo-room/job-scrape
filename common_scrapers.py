@@ -267,7 +267,7 @@ All config keys optional
     "exclude_search_terms": [ "intern", "QA"],
     "excluded_companies": ["tesla"],
     "countries": ["Remote", "Multiple Locations", "Anywhere", "United States"],
-    "local_locations": ["NY", "NYC"],
+    "local_locations": ["NY", "NYC", "New York"],
     "only_include_local_or_remote": true
 }
 
@@ -321,7 +321,7 @@ class ClimateTechListPage(JobsPage):
         time_cutoff = today - delta
 
         def has_relevant_title(row):
-            if "exclude_search_terms" in config:
+            if config and "exclude_search_terms" in config:
                 lower_title = row["cellValuesByColumnId"][relevant_column_ids["Position Title"]].lower()
                 if any(term in lower_title for term in set(config["exclude_search_terms"])):
                     return False
@@ -332,16 +332,16 @@ class ClimateTechListPage(JobsPage):
             # Assumes capitalization
             location = row["cellValuesByColumnId"][relevant_column_ids["Job Location"]]
 
-            if "excluded_locations" in config and any(term in location for term in set(config["excluded_locations"])):
+            if config and "excluded_locations" in config and any(term in location for term in set(config["excluded_locations"])):
                 return False
             
             if location.strip() == "":
                 return True
 
-            if "local_locations" in config and any(term in location for term in set(config["local_locations"])):
+            if config and "local_locations" in config and any(term in location for term in set(config["local_locations"])):
                 return True
                 
-            if "countries" in config:
+            if config and "countries" in config:
                 if relevant_column_ids["Country"] not in row["cellValuesByColumnId"]:
                     # no Country data
                     return True
@@ -355,7 +355,7 @@ class ClimateTechListPage(JobsPage):
             return True
 
         def should_exclude_company(row):
-            if "excluded_companies" in config:
+            if config and "excluded_companies" in config:
                 return row["cellValuesByColumnId"][relevant_column_ids["Company"]] in set(config["excluded_companies"])
 
         def is_relevant(row):
@@ -383,7 +383,7 @@ class ClimateTechListPage(JobsPage):
                     title=None,
                     id=row["id"]
                 )
-                if "local_locations" in config and any(term in row["cellValuesByColumnId"][relevant_column_ids["Job Location"]] for term in set(config["local_locations"])):
+                if config and "local_locations" in config and any(term in row["cellValuesByColumnId"][relevant_column_ids["Job Location"]] for term in set(config["local_locations"])):
                     title = format_title(row, relevant_column_names)
                     job.title = f"🏠 {title}"
                     local_jobs.append(job)
@@ -398,7 +398,7 @@ class ClimateTechListPage(JobsPage):
                     _other_jobs.append(job)
 
         # ignore other jobs
-        if "only_include_local_or_remote" in config and config["only_include_local_or_remote"]:
+        if config and "only_include_local_or_remote" in config and config["only_include_local_or_remote"]:
             return local_jobs + remote_jobs    
         else:
             return local_jobs + remote_jobs + _other_jobs

@@ -4,12 +4,19 @@
 		{
 			"name": "Climate Tech List",
 			"jobs_page": "https://airtable.com/appo9WyVgYvpap792/shrbAhhxKqvWjaJMs",
-			"jobs_page_class_name": "ClimateTechListPage"
+			"jobs_page_class_name": "ClimateTechListPage",
+			"config": {
+				"exclude_search_terms": [ "intern", "(m/f/d)", "(f/m/d)", "(m/w/d)", "QA"],
+				"countries": ["Remote", "Multiple Locations", "Anywhere", "United States"],
+				"local_locations": ["NY", "NYC", "New York"],
+				"only_include_local_or_remote": false,
+				"excluded_companies": ["tesla"]
+			}
 		},
 		{
 			"name": "Example Company With All Keys",
 			"jobs_page": "https://www.example.com/jobs",
-			"jobs_page_class": "LeverCoPage",
+			"jobs_page_class_name": "LeverCoPage",
 
 			"active": false,
 			"no_jobs_phrase": "Sorry, we couldn't find anything here",
@@ -24,8 +31,7 @@
 			"tags": [""],
 			"what": "",
 			"referral": "",
-			"application_history": "",
-
+			"application_history": ""
 		}
 	]
 }
