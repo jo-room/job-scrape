@@ -4,6 +4,7 @@ from models import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
+# https://job-boards.greenhouse.io/company
 class GreenhousePage:
     @staticmethod
     def get_jobs(driver, config=None):
@@ -20,6 +21,7 @@ class GreenhousePage:
             )
         return jobs
 
+# https://boards.greenhouse.io/embed/job_board?for=company
 class GreenhouseEmbeddedStandalonePage:
     @staticmethod
     def get_jobs(driver, config=None):
@@ -36,6 +38,7 @@ class GreenhouseEmbeddedStandalonePage:
             )
         return jobs
 
+# Company career page that contains an iframe to a GreenhouseEmbeddedStandalonePage. Using GreenhouseEmbeddedStandalonePage is likely more stable if you can use it directly.
 class GreenhouseEmbeddedPage:
     @staticmethod
     def get_jobs(driver, config=None):
@@ -149,6 +152,7 @@ class RipplingPage:
             )
         return jobs
 
+# https://jobs.ashbyhq.com/company
 class AshbyPage:
     @staticmethod
     def get_jobs(driver, config=None):
@@ -168,6 +172,7 @@ class AshbyPage:
                 )
         return jobs
 
+# Company career page that contains an iframe to a AshbyPage. Using AshbyPage is likely more stable if you can use it directly.
 class AshbyEmbeddedPage:
     @staticmethod
     def get_jobs(driver, config=None):

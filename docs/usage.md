@@ -1,11 +1,26 @@
 # Usage
 
-For said non-software-engineer friends
+For said friends, including non-software-engineers.
+
+If a company has a built-in alert subscription, you should use that! It will work better and not fall out of date. I also make no guarantee that this software works 🙃.
+
+For the software engineers, I'll take bug fix PRs and new features for things that are generally applicable to people. E.g., scrapers for job boards, or generally useful config options for scrapers. Feel free to poke me first 🙂.
+
+## Privacy
+
+I'm not going to deliberately look through your list of companies, but as the hosting account owner I cannot remove myself from having permissions to access your uploaded files.
+
+Additionally, I will sometimes look at logs in order to debug errors. Anything you `print()`, or potentially errors in your code, will end up in logs that I may see while looking at logs to fix errors. Thus, I may as a side effect see the companies, etc that you are scraping. These logs are deleted after 1 month.
+
+I won't act on anything I see, including that I will not use or share any information I see for my own job search or anyone else's.
+
+This is about the level of privacy you would expect with the employees of any website you use, but in this case you personally know the only employee.
+
+If you want to run things without me having access to them, you can run the scrape locally on your computer.
 
 ## Installation
 Download and install
-- PyCharm Community Edition (might need to scroll down for the Community Edition): https://www.jetbrains.com/pycharm/download/
-
+- VSCode: https://code.visualstudio.com/
 
 ## Programming 102/tips on writing scrapers
 
@@ -63,16 +78,3 @@ https://www.selenium.dev/documentation/webdriver/elements/locators/
 `.find_elements(...)` (note the plural) will happily keep going if no element(s) are found. If you have a loop through the elements after, it will just not loop through anything.
 
 If you get an error message, search it up.
-
-
-## Privacy
-
-I'm not going to deliberately look through your list of companies, but as the hosting account owner I cannot remove myself from having permissions to access your uploaded files.
-
-Additionally, I will sometimes look at logs in order to debug errors. Anything you `print()`, or potentially errors in your code, will end up in logs that I may see while looking at logs to fix errors. Thus, I may as a side effect see the companies, etc that you are scraping. These logs are deleted after 1 month.
-
-I won't act on anything I see, including that I will not use or share any information I see for my own job search or anyone else's.
-
-This is about the level of privacy you would expect with the employees of any website you use, but in this case you personally know the only employee.
-
-If you want to run things without me having access to them, you can run the scrape locally on your computer.

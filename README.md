@@ -13,7 +13,7 @@ Can be run as a local Python script to output new jobs (relative to the last run
 
 ## Local development and running
 
-Assumes Python 3.12 and up.
+Assumes Python 3.12 and up. Check out [pyenv](https://github.com/pyenv/pyenv#installation) to manage python versions.
 
 Install dependencies
 ```sh
