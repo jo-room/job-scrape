@@ -5,34 +5,44 @@ from typing import TypedDict
 from dataclasses import dataclass
 from enum import Enum
 
+
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKCYAN = "\033[96m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
 
 class CrunchbasePageType(Enum):
     HUB = 1
     DISCOVER = 2
+
 
 @dataclass
 class JobPosting:
     title: str
     id: str
     link: str = None
-    date: datetime.date = None # only used for crunchbase
+    date: datetime.date = None  # only used for crunchbase
 
     def __post_init__(self):
         if self.title:
-            assert isinstance(self.title, str), f"JobPosting title must be string, got type {type(self.title)} instead"
-        assert isinstance(self.id, str) or isinstance(self.id, str) , f"JobPosting id must be int or string, got type {type(self.id)} instead"
+            assert isinstance(
+                self.title, str
+            ), f"JobPosting title must be string, got type {type(self.title)} instead"
+        assert isinstance(self.id, str) or isinstance(
+            self.id, str
+        ), f"JobPosting id must be int or string, got type {type(self.id)} instead"
         if self.link:
-            assert isinstance(self.link, str), f"JobPosting link must be string, got type {type(self.link)} instead"
+            assert isinstance(
+                self.link, str
+            ), f"JobPosting link must be string, got type {type(self.link)} instead"
+
 
 @dataclass
 class Company:
@@ -58,10 +68,12 @@ class Company:
     is_crunchbase: bool = False
     scrape_pages: [(str, CrunchbasePageType)] = None
 
+
 class JobsPage:
     @staticmethod
     def get_jobs(driver):
         raise NotImplementedError("Unexpected call to base class")
+
 
 class JobsPageStatus(Enum):
     SPECIFIC_NO_JOBS_PHRASE_FOUND = 1
@@ -70,12 +82,14 @@ class JobsPageStatus(Enum):
     SOME_JOB_FOUND = 4
     NO_JOBS_FOUND = 5
 
+
 @dataclass
-class ScrapeError: # serializable
+class ScrapeError:  # serializable
     company_name: str = None
     jobs_page: str = None
     message: str = None
     is_new_this_run: bool = False
+
 
 @dataclass
 class RunRecord:
@@ -86,8 +100,8 @@ class RunRecord:
     def from_dict(run_record_dict):
         return RunRecord(
             existing_jobs=run_record_dict["existing_jobs"],
-            errors=[ScrapeError(**error) for error in run_record_dict["errors"]]
+            errors=[ScrapeError(**error) for error in run_record_dict["errors"]],
         )
-        
+
     def has_new_error(self) -> bool:
         return any(error.is_new_this_run for error in self.errors)

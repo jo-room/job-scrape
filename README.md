@@ -51,6 +51,16 @@ python3 job_scrape.py configs/config.json data/run_record.json --headless
 .venv/bin/python job_scrape.py configs/crunchbase data/crunchbase_run_record.json --backup_run_record
 ```
 
+Set up pre-commit for contributions
+```sh
+pip3 install -r requirements-dev.txt
+pre-commit install
+
+# or
+# .venv/bin/python -m pre_commit install
+# if your environment is weird
+```
+
 ## Deployment
 
 See [docs/deployment.md](docs/deployment.md).
