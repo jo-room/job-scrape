@@ -296,7 +296,9 @@ class ClimateTechListPage(JobsPage):
                 if message_dict["message"]["method"] == "Network.requestWillBeSent":
                     driver.execute_script("window.stop();")
                     request_info = message_dict["message"]["params"]["request"]
-                    data = requests.get(request_info["url"], headers = request_info["headers"]).json()
+                    url = request_info["url"]
+                    if "allowMsgpackOfResult" not in url:
+                        data = requests.get(url, headers = request_info["headers"]).json()
                     print("got data")
 
         columns = data["data"]["table"]["columns"]
