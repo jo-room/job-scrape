@@ -387,6 +387,7 @@ class ClimateTechListPage(JobsPage):
                         data = requests.get(url, headers=request_info["headers"]).json()
                     print("got data")
 
+        print("data", data)
         columns = data["data"]["table"]["columns"]
         # order determines title composition
         relevant_column_names = [
