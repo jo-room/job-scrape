@@ -384,11 +384,14 @@ class ClimateTechListPage(JobsPage):
                     request_info = message_dict["message"]["params"]["request"]
                     url = request_info["url"]
                     if "allowMsgpackOfResult" not in url:
-                        print('request_info["headers"]', request_info["headers"])
-                        data = requests.get(url, headers=request_info["headers"]).json()
+                        headers = request_info["headers"]
+                        if headers["x-time-zone"] == "undefined":
+                            # It is undefined running on a lambda
+                            headers["x-time-zone"] = "America/New_York"
+                        data = requests.get(url, headers=headers).json()
                         print("got data")
 
-        print("data", data)
+        print("data", data.keys())
         columns = data["data"]["table"]["columns"]
         # order determines title composition
         relevant_column_names = [
