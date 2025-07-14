@@ -384,8 +384,9 @@ class ClimateTechListPage(JobsPage):
                     request_info = message_dict["message"]["params"]["request"]
                     url = request_info["url"]
                     if "allowMsgpackOfResult" not in url:
+                        print('request_info["headers"]', request_info["headers"])
                         data = requests.get(url, headers=request_info["headers"]).json()
-                    print("got data")
+                        print("got data")
 
         print("data", data)
         columns = data["data"]["table"]["columns"]
