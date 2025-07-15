@@ -12,6 +12,12 @@ class GreenhousePage:
         job_elements = driver.find_elements(By.CLASS_NAME, "job-post")
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
@@ -30,6 +36,12 @@ class GreenhouseEmbeddedStandalonePage:
         job_elements = driver.find_elements(By.CLASS_NAME, "opening")
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
@@ -58,6 +70,12 @@ class LeverCoPage:
         job_elements = driver.find_elements(By.CLASS_NAME, "posting")
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
@@ -77,6 +95,12 @@ class BambooPage:
         )
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             jobs.append(
                 JobPosting(
                     title=job.text,
@@ -93,11 +117,18 @@ class WorkablePage:
         job_elements = container.find_elements(By.XPATH, '//li[@data-ui="job"]')
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
                     title=job.text,
                     id=link_url,
+                    link=link_url
                 )
             )
         return jobs
@@ -170,6 +201,12 @@ class WorkdayPage:
                 if (
                     "title" in job
                 ):  # there are inconsistently sometimes entries that have no title or externalPath, just the bulletFields field
+                    if config and "exclude_search_terms" in config:
+                        lower_title = job["title"].lower()
+                        if any(
+                            term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                        ):
+                            continue
                     link_url = driver.current_url.split("?")[0] + job["externalPath"]
                     jobs.append(
                         JobPosting(
@@ -192,6 +229,12 @@ class RipplingPage:
         ]
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
@@ -214,6 +257,12 @@ class AshbyPage:
         for container in containers:
             job_elements = container.find_elements(By.TAG_NAME, "a")
             for job in job_elements:
+                if config and "exclude_search_terms" in config:
+                    lower_title = job.text.lower()
+                    if any(
+                        term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                    ):
+                        continue
                 link_url = job.get_attribute("href")
                 jobs.append(
                     JobPosting(
@@ -233,7 +282,7 @@ class AshbyEmbeddedPage:
         assert ashby_iframe.tag_name == "iframe"
         driver.switch_to.frame(ashby_iframe)
 
-        return AshbyPage.get_jobs(driver)
+        return AshbyPage.get_jobs(driver, config)
 
 
 class ApplyToJobPage:
@@ -243,6 +292,12 @@ class ApplyToJobPage:
         job_elements = container.find_elements(By.CSS_SELECTOR, "li.list-group-item")
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
@@ -261,6 +316,12 @@ class SmartRecruitersPage:
         job_elements = container.find_elements(By.CSS_SELECTOR, "li.opening-job")
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
@@ -318,6 +379,12 @@ class BitsInBioPage:
         job_elements = container.find_elements(By.CLASS_NAME, "job-item")
         jobs = []
         for job in job_elements:
+            if config and "exclude_search_terms" in config:
+                lower_title = job.text.lower()
+                if any(
+                    term in lower_title for term in set([excluded_word.lower() for excluded_word in config["exclude_search_terms"]])
+                ):
+                    continue
             button_row = job.find_element(By.CLASS_NAME, "faq-answer").find_element(
                 By.CLASS_NAME, "button-row"
             )
