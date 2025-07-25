@@ -249,7 +249,9 @@ def import_from_path(module_name, file_path):
     return module
 
 
-def get_companies(config_companies, additional_scrapers_module=None):
+def get_companies(
+    config_companies, default_config=None, additional_scrapers_module=None
+):
     import common_scrapers
     import inspect
 
@@ -264,6 +266,8 @@ def get_companies(config_companies, additional_scrapers_module=None):
 
     companies = []
     for company in config_companies:
+        if "config" not in company:
+            company["config"] = default_config
         company["jobs_page_class"] = all_scrapers[company["jobs_page_class_name"]]
         companies.append(Company(**company))
     return companies
@@ -338,7 +342,12 @@ if __name__ == "__main__":
     if args.config_file.endswith(".json"):
         with open(args.config_file) as f:
             config = json.load(f)
-            companies = get_companies(config["companies"], additional_scrapers_module)
+            default_config = (
+                config["default_config"] if "default_config" in config else None
+            )
+            companies = get_companies(
+                config["companies"], default_config, additional_scrapers_module
+            )
             search_terms = config["search_terms"]
     else:
         config_module = import_from_path("config", args.config_file)
