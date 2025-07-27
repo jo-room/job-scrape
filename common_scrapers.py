@@ -8,10 +8,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 def is_excluded(config, title) -> bool:
     if config and "exclude_search_terms" in config:
-        lower_title = title.lower()
-        exclude_terms = [excluded_word.lower() for excluded_word in config["exclude_search_terms"]]
-        pattern = r'\b(?:' + '|'.join(re.escape(term) for term in exclude_terms) + r')\b'
-        if re.search(pattern, lower_title):
+        lower_title_words = set(title.lower().split())
+        exclude_terms = {excluded_word.lower() for excluded_word in config["exclude_search_terms"]}
+        if len(lower_title_words.intersection(exclude_terms)) > 0:
             return True
     return False
 
