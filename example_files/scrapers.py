@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 
 class WriteYourOwnPage:
     @staticmethod
-    def get_jobs(driver):
+    def get_jobs(driver, config=None):
         container = driver.find_element(By.ID, "jobs")
         job_elements = container.find_elements(By.CLASS_NAME, "job-posting")
 

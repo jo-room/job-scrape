@@ -273,6 +273,56 @@ class SmartRecruitersPage:
 
 
 """
+Only clicks Next max 20 times.
+Chose to cap because long runs can make the scraper bug out with some devtools detached error. 20 might still be too much.
+"""
+
+
+class AvaturePage:
+    @staticmethod
+    def get_jobs(driver, config=None):
+        MAX_LOAD_MORE = 20
+        PAUSE_TIME = 1
+        click_counter = 0
+        jobs = []
+
+        while (
+            click_counter < MAX_LOAD_MORE
+            and len(driver.find_elements(By.LINK_TEXT, "Next >>")) > 0
+        ):
+            container = driver.find_element(By.CLASS_NAME, "section--search-jobs")
+            job_elements = container.find_elements(
+                By.CLASS_NAME, "article__header__text"
+            )
+            for job in job_elements:
+                link_url = (
+                    job.find_element(By.CLASS_NAME, "title")
+                    .find_element(By.TAG_NAME, "a")
+                    .get_attribute("href")
+                )
+                jobs.append(
+                    JobPosting(
+                        title=job.text,
+                        id=link_url,
+                        link=link_url,
+                    )
+                )
+            next_button = driver.find_element(By.LINK_TEXT, "Next >>")
+            ActionChains(driver).move_to_element(next_button).perform()
+            # js click because there's a potential cookies popup
+            driver.execute_script("arguments[0].click();", next_button)
+
+            time.sleep(PAUSE_TIME)
+            click_counter += 1
+        print(
+            "Avature clicked next",
+            click_counter,
+            f"times (capped at {MAX_LOAD_MORE})",
+        )
+        return jobs
+
+
+"""
 Only clicks Load More max 5 times.
 Chose to cap because long runs can make the scraper bug out with some devtools detached error.
 And at a weekdays scrape rate, 5 clicks usually goes far back enough for the frequency of new jobs being posted.
