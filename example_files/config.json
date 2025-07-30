@@ -33,8 +33,5 @@
 			"referral": "",
 			"application_history": ""
 		}
-	],
-	"default_config": {
-		"exclude_search_terms": [ "intern", "(m/f/d)", "(f/m/d)", "(m/w/d)"]
-	}
+	]
 }
