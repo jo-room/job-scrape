@@ -34,7 +34,7 @@
 			"application_history": ""
 		}
 	],
-	"default_config": {
+	"default_company_config": {
 		"exclude_search_terms": [ "intern", "(m/f/d)", "(f/m/d)", "(m/w/d)"]
 	}
 }
