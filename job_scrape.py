@@ -29,6 +29,7 @@ def get_new_relevant_jobs(
     run_record: RunRecord,
     companies,
     search_terms,
+    default_company_config,
     limit_company=None,
     add_search_term=None,
     default_sleep=1,
@@ -39,7 +40,13 @@ def get_new_relevant_jobs(
     )
 
     relevant_jobs, skipped_companies, verify_no_jobs, errors = get_relevant_jobs(
-        driver, limit_company, add_search_term, default_sleep, companies, search_terms
+        driver,
+        limit_company,
+        add_search_term,
+        default_sleep,
+        companies,
+        search_terms,
+        default_company_config,
     )
 
     new_relevant_jobs = {}
@@ -86,7 +93,13 @@ def get_new_relevant_jobs(
 
 
 def get_relevant_jobs(
-    driver, limit_company, add_search_term, default_sleep, companies, search_terms
+    driver,
+    limit_company,
+    add_search_term,
+    default_sleep,
+    companies,
+    search_terms,
+    default_company_config,
 ):
     relevant_jobs: list[tuple[Company, JobPosting]] = []
     skipped_companies = []
@@ -110,7 +123,11 @@ def get_relevant_jobs(
                 else:
                     assert company.jobs_page
                     company_relevant_jobs, jobs_page_status = get_company_relevant_jobs(
-                        driver, company, search_terms, default_sleep
+                        driver,
+                        company,
+                        search_terms,
+                        default_company_config,
+                        default_sleep,
                     )
                 if len(company_relevant_jobs) > 0:
                     for job in company_relevant_jobs:
@@ -161,7 +178,7 @@ def get_crunchbase_companies(
 
 
 def get_company_relevant_jobs(
-    driver, company, search_terms, default_sleep
+    driver, company, search_terms, default_company_config, default_sleep
 ) -> (list[JobPosting], JobsPageStatus):
     driver.get(company.jobs_page)
     time.sleep(company.load_sleep if company.load_sleep else default_sleep)
@@ -177,7 +194,9 @@ def get_company_relevant_jobs(
                 f"Human verification hit. There are probably ways to bypass but I haven't figured/built that out yet. Text: {driver.find_element(By.TAG_NAME, 'body').text.replace("\n", " ")}"
             )
         if company.jobs_page_class:
-            jobs = company.jobs_page_class.get_jobs(driver, company.config)
+            jobs = company.jobs_page_class.get_jobs(
+                driver, company.config if company.config else default_company_config
+            )
             if len(jobs) > 0:
                 jobs_page_status = JobsPageStatus.SOME_JOB_FOUND
             relevant_jobs = [
@@ -249,9 +268,7 @@ def import_from_path(module_name, file_path):
     return module
 
 
-def get_companies(
-    config_companies, default_config=None, additional_scrapers_module=None
-):
+def get_companies(config_companies, additional_scrapers_module=None):
     import common_scrapers
     import inspect
 
@@ -266,8 +283,6 @@ def get_companies(
 
     companies = []
     for company in config_companies:
-        if "config" not in company:
-            company["config"] = default_config
         company["jobs_page_class"] = all_scrapers[company["jobs_page_class_name"]]
         companies.append(Company(**company))
     return companies
@@ -342,13 +357,13 @@ if __name__ == "__main__":
     if args.config_file.endswith(".json"):
         with open(args.config_file) as f:
             config = json.load(f)
-            default_config = (
-                config["default_config"] if "default_config" in config else None
-            )
-            companies = get_companies(
-                config["companies"], default_config, additional_scrapers_module
-            )
+            companies = get_companies(config["companies"], additional_scrapers_module)
             search_terms = config["search_terms"]
+            default_company_config = (
+                config["default_company_config"]
+                if "default_company_config" in config
+                else None
+            )
     else:
         config_module = import_from_path("config", args.config_file)
         companies = [
@@ -356,6 +371,11 @@ if __name__ == "__main__":
             for company in config_module.get_companies(additional_scrapers_module)
         ]
         search_terms = config_module.search_terms
+        default_company_config = (
+            config_module.default_company_config
+            if hasattr(config_module, "default_company_config")
+            else None
+        )
 
     new_relevant_jobs, run_record, verify_no_jobs, errors_message = (
         get_new_relevant_jobs(
@@ -363,6 +383,7 @@ if __name__ == "__main__":
             run_record,
             companies,
             search_terms,
+            default_company_config,
             args.limit_company,
             args.add_search_term,
             args.default_sleep,
