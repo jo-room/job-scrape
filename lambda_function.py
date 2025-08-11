@@ -99,6 +99,11 @@ def lambda_handler(event, context, local=False):
             config = json.loads(config_file_content)
             companies = get_companies(config["companies"], additional_scrapers_module)
             search_terms = config["search_terms"]
+            default_company_config = (
+                config["default_company_config"]
+                if "default_company_config" in config
+                else None
+            )
         else:
             assert "config_file" in event["aws_config"]
             config_path = os.path.join(tmp_config_scrapers_folder, "config.py")
@@ -112,6 +117,11 @@ def lambda_handler(event, context, local=False):
                 for company in config_module.get_companies(additional_scrapers_module)
             ]
             search_terms = config_module.search_terms
+            default_company_config = (
+                config_module.default_company_config
+                if hasattr(config_module, "default_company_config")
+                else None
+            )
 
     run_record_object = s3.Object(
         event["aws_config"]["bucket_name"], event["aws_config"]["run_record_json"]
@@ -125,6 +135,7 @@ def lambda_handler(event, context, local=False):
             run_record,
             companies,
             search_terms,
+            default_company_config,
             limit_company,
             temp_term,
             default_sleep,
