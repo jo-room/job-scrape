@@ -1,8 +1,18 @@
+import re
 import requests
 import json
 from models import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+
+
+def is_excluded(config, title) -> bool:
+    if config and "exclude_search_terms" in config:
+        lower_title_words = set(title.lower().split())
+        exclude_terms = {excluded_word.lower() for excluded_word in config["exclude_search_terms"]}
+        if len(lower_title_words.intersection(exclude_terms)) > 0:
+            return True
+    return False
 
 
 # https://job-boards.greenhouse.io/company
@@ -12,10 +22,13 @@ class GreenhousePage:
         job_elements = driver.find_elements(By.CLASS_NAME, "job-post")
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
-                    title=job.text,
+                    title=title,
                     id=link_url,
                     link=link_url,
                 )
@@ -30,10 +43,13 @@ class GreenhouseEmbeddedStandalonePage:
         job_elements = driver.find_elements(By.CLASS_NAME, "opening")
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
-                    title=job.text,
+                    title=title,
                     id=link_url,
                     link=link_url,
                 )
@@ -58,10 +74,13 @@ class LeverCoPage:
         job_elements = driver.find_elements(By.CLASS_NAME, "posting")
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
-                    title=job.text,
+                    title=title,
                     id=link_url,
                     link=link_url,
                 )
@@ -77,9 +96,12 @@ class BambooPage:
         )
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             jobs.append(
                 JobPosting(
-                    title=job.text,
+                    title=title,
                     id=job.find_element(By.TAG_NAME, "a").get_attribute("href"),
                 )
             )
@@ -93,11 +115,15 @@ class WorkablePage:
         job_elements = container.find_elements(By.XPATH, '//li[@data-ui="job"]')
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
-                    title=job.text,
+                    title=title,
                     id=link_url,
+                    link=link_url
                 )
             )
         return jobs
@@ -170,10 +196,13 @@ class WorkdayPage:
                 if (
                     "title" in job
                 ):  # there are inconsistently sometimes entries that have no title or externalPath, just the bulletFields field
+                    title = job["title"]
+                    if is_excluded(config, title):
+                        continue
                     link_url = driver.current_url.split("?")[0] + job["externalPath"]
                     jobs.append(
                         JobPosting(
-                            title=job["title"],
+                            title=title,
                             id=link_url,
                             link=link_url,
                         )
@@ -192,10 +221,13 @@ class RipplingPage:
         ]
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
-                    title=job.text
+                    title=title
                     + " (note this only shows one location but there might be multiple for this same link)",
                     id=link_url,
                     link=link_url,
@@ -214,10 +246,13 @@ class AshbyPage:
         for container in containers:
             job_elements = container.find_elements(By.TAG_NAME, "a")
             for job in job_elements:
+                title = job.text
+                if is_excluded(config, title):
+                    continue
                 link_url = job.get_attribute("href")
                 jobs.append(
                     JobPosting(
-                        title=job.text,
+                        title=title,
                         id=link_url,
                         link=link_url,
                     )
@@ -233,7 +268,7 @@ class AshbyEmbeddedPage:
         assert ashby_iframe.tag_name == "iframe"
         driver.switch_to.frame(ashby_iframe)
 
-        return AshbyPage.get_jobs(driver)
+        return AshbyPage.get_jobs(driver, config)
 
 
 class ApplyToJobPage:
@@ -243,10 +278,13 @@ class ApplyToJobPage:
         job_elements = container.find_elements(By.CSS_SELECTOR, "li.list-group-item")
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
-                    title=job.text,
+                    title=title,
                     id=link_url,
                     link=link_url,
                 )
@@ -261,10 +299,13 @@ class SmartRecruitersPage:
         job_elements = container.find_elements(By.CSS_SELECTOR, "li.opening-job")
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             link_url = job.find_element(By.TAG_NAME, "a").get_attribute("href")
             jobs.append(
                 JobPosting(
-                    title=job.text,
+                    title=title,
                     id=link_url,
                     link=link_url,
                 )
@@ -368,6 +409,9 @@ class BitsInBioPage:
         job_elements = container.find_elements(By.CLASS_NAME, "job-item")
         jobs = []
         for job in job_elements:
+            title = job.text
+            if is_excluded(config, title):
+                continue
             button_row = job.find_element(By.CLASS_NAME, "faq-answer").find_element(
                 By.CLASS_NAME, "button-row"
             )
@@ -390,7 +434,7 @@ class BitsInBioPage:
 
             jobs.append(
                 JobPosting(
-                    title=job.text,
+                    title=title,
                     id=link_url,
                     link=link_url,
                 )
@@ -478,16 +522,10 @@ class ClimateTechListPage(JobsPage):
         time_cutoff = today - delta
 
         def has_relevant_title(row):
-            if config and "exclude_search_terms" in config:
-                lower_title = row["cellValuesByColumnId"][
-                    relevant_column_ids["Position Title"]
-                ].lower()
-                if any(
-                    term in lower_title for term in set(config["exclude_search_terms"])
-                ):
-                    return False
-
-            return True
+            title = row["cellValuesByColumnId"][
+                relevant_column_ids["Position Title"]
+            ]
+            return not is_excluded(config, title)
 
         def has_relevant_location(row):
             # Assumes capitalization
